@@ -6,11 +6,11 @@ Gem::Specification.new do |spec|
   spec.name = "gq"
   spec.version = Gq::VERSION
   spec.authors = ["Lucas Taylor"]
-  spec.email = ["lucas@sharelocalmedia.com"]
+  spec.email = ["lucas@perfectlunacy.com"]
 
-  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
-  spec.description = "TODO: Write a longer description or delete this line."
-  spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.summary = "Stacked Commit management for Git"
+  spec.description = "GQ is a tool for managing stacked commits in Git. It provides a simple interface for managing a stack of commits, allowing you to easily reorder, squash, and edit commits before pushing them to a remote repository. Gq is designed to be fast, lightweight, and easy to use, making it a great tool for developers who want to keep their commit history clean and organized."
+  spec.homepage = "http://perfectlunacy.com"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
     ls.readlines("\x0", chomp: true).reject do |f|
       (f == gemspec) ||
-        f.start_with?(*%w[bin/ test/ spec/ features/ .git appveyor Gemfile])
+        f.start_with?(*%w[bin/ spec/ .git appveyor Gemfile])
     end
   end
   spec.bindir = "exe"
@@ -35,6 +35,8 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "example-gem", "~> 1.0"
+  spec.add_dependency "toml"
+  spec.add_dependency "optparse"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
