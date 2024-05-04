@@ -1,8 +1,7 @@
 # frozen_string_literal: true
+require 'gq/shell'
 
 module Gq::Git
-  include Gq::Shell
-
   def in_git_repo
     `git rev-parse --is-inside-work-tree`.strip == 'true'
   end

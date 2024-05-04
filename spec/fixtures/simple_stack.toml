@@ -1,0 +1,19 @@
+[master]
+head = "12345abc"
+parent = ""
+
+[branch1]
+head = "12345bcd"
+parent = "master"
+
+[branch2]
+head = "12345def"
+parent = "master"
+
+[branch1_1]
+head = "12345efg"
+parent = "branch1"
+
+[branch1_2]
+head = "12345hij"
+parent = "branch1_1"
