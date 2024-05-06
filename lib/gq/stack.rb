@@ -73,7 +73,6 @@ module Gq
     def link_parents
       @branches.values.each do |branch|
         next if branch.parent.nil? || branch.parent.empty?
-        puts "Linking #{branch.parent} -> #{branch.name}"
         # TODO: If a parent branch is missing... what do?
         @branches[branch.parent].add_child(branch)
       end
@@ -83,7 +82,6 @@ module Gq
       toml_data.each do |bn, attrs|
         @branches[bn] = StackNode.new(bn, attrs['head'], attrs['parent'])
       end
-      puts "Created #{@branches.size} branches: #{@branches.keys.join("\n")}"
     end
   end
 end
