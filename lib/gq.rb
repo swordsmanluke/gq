@@ -34,10 +34,12 @@ Usage:
 """
 
   class Gq
-    attr_reader :git
+    attr_reader :git, :stack
 
     def initialize
-      @git = Gq::Git
+      @git = ::Gq::Git
+      @stack = ::Gq::Stack.new(git)
+      @stack.load_file if @stack.exists?
     end
 
     def run
@@ -46,8 +48,10 @@ Usage:
 
       cmd = ARGV.shift
       puts "Operation: #{cmd}"
-      self_destruct 'gq has not been initialized - please run gq init' unless git.gq_stack or cmd == "init"
+      self_destruct 'gq has not been initialized - please run gq init' unless stack.exists? or cmd == "init"
     end
 
   end
 end
+
+Gq::Gq.new.run

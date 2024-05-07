@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'gq/git'
+require_relative 'git'
 require 'toml'
 
 module Gq
@@ -31,10 +31,17 @@ module Gq
       @branches = {}
     end
 
-    def load_file(toml_file_path)
-      self_destruct "No stack file found at #{toml_file_path}" unless File.exists? toml_file_path
+    def config_file_path
+      "#{git.root_dir}/.gq/stack.toml"
+    end
 
-      load_toml(File.read(toml_file_path))
+    def exists?
+      File.exist? config_file_path
+    end
+
+    def load_file
+      self_destruct "No stack config found - have you run `gq init`?" unless exists?
+      load_toml(File.read(config_file_path))
     end
 
     def load_toml(stack_str)
@@ -44,8 +51,21 @@ module Gq
       @root = @branches.values.find { |b| b.parent.empty? }
     end
 
-    def checkout(branch_node)
-      git.checkout(branch_node.branch_name)
+    def initialize_stack
+      self_destruct "Already initialized" if @file.exists?
+
+      add_branch(git.current_branch)
+    end
+
+    def add_branch(branch_name, parent=nil)
+      @branches[branch_name] = StackNode.new(branch_name, branch_name, parent)
+      save!
+    end
+
+    def create_branch(new_branch)
+      parent = git.current_branch
+      git.new_branch(new_branch)
+      add_branch(new_branch, parent)
     end
 
     def up
@@ -56,9 +76,9 @@ module Gq
       # Move toward the root
     end
 
-    def save!(toml_file_path)
+    def save!
       nodes = [@root]
-      File.open(toml_file_path, "w") do |f|
+      @file.open("w") do |f|
         while nodes.any?
           node = nodes.shift
           f.write(node.to_toml)
