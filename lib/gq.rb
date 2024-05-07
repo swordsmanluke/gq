@@ -53,6 +53,18 @@ Usage:
       case cmd
       when "init"
         stack.initialize_stack
+      when "cc" # Commit
+        self_destruct "Not implemented yet!"
+      when "bc" # Create branch
+        stack.create_branch(ARGV.shift)
+      when "up"
+        stack.up
+      when "down"
+        stack.down
+      when "sync"
+        self_destruct "Not implemented yet!"
+      when "move"
+        self_destruct "Not implemented yet!"
       else
         puts "unknown command #{cmd}"
       end
