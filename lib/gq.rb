@@ -49,6 +49,13 @@ Usage:
       cmd = ARGV.shift
       puts "Operation: #{cmd}"
       self_destruct 'gq has not been initialized - please run gq init' unless stack.exists? or cmd == "init"
+
+      case cmd
+      when "init"
+        stack.initialize_stack
+      else
+        puts "unknown command #{cmd}"
+      end
     end
 
   end

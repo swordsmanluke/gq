@@ -25,6 +25,12 @@ module Gq
           .chomp
       end
 
+      def ignore(path)
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        bash("echo #{path} >> .gitignore") unless File.readlines(".gitignore").any? { |line| line.chomp == path }
+      end
+
       def current_branch
         self_destruct("Not in a git repository") unless in_git_repo
 

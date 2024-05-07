@@ -23,11 +23,10 @@ module Gq
   end
 
   class Stack
-    attr_reader :git, :root
+    attr_reader :git
 
     def initialize(git_client=::Gq::Git)
       @git = git_client
-      @root = nil
       @branches = {}
     end
 
@@ -40,7 +39,7 @@ module Gq
     end
 
     def load_file
-      self_destruct "No stack config found - have you run `gq init`?" unless exists?
+      self_destruct "1. No stack config found - have you run `gq init`?" unless exists?
       load_toml(File.read(config_file_path))
     end
 
@@ -48,17 +47,19 @@ module Gq
       toml_data = TOML::Parser.new(stack_str).parsed
       create_branches(toml_data)
       link_parents
-      @root = @branches.values.find { |b| b.parent.empty? }
     end
 
     def initialize_stack
-      self_destruct "Already initialized" if @file.exists?
+      self_destruct "Already initialized" if exists?
 
       add_branch(git.current_branch)
+      git.ignore('.gq/stack.toml')
     end
 
-    def add_branch(branch_name, parent=nil)
-      @branches[branch_name] = StackNode.new(branch_name, branch_name, parent)
+    def add_branch(branch, parent=nil)
+      self_destruct "Branch already exists: #{branch.name}" if @branches.key?(branch.name)
+
+      @branches[branch.name] = StackNode.new(branch.name, branch.sha, parent)
       save!
     end
 
@@ -77,13 +78,13 @@ module Gq
     end
 
     def save!
-      nodes = [@root]
-      @file.open("w") do |f|
+      nodes = @branches.values
+      Dir.mkdir(File.dirname(config_file_path))
+      File.open(config_file_path, "w") do |f|
         while nodes.any?
           node = nodes.shift
           f.write(node.to_toml)
           f.write("\n\n")
-          nodes += node.children
         end
       end
     end
