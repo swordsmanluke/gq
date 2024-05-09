@@ -46,6 +46,11 @@ module Gq
         Branch.new(name, sha)
       end
 
+      def branches
+        self_destruct("Not in a git repository") unless in_git_repo
+        bash("git branch --format='%(refname:short)'").stdout.split("\n")
+      end
+
       def new_branch(branch_name)
         self_destruct("Not in a git repository") unless in_git_repo
 

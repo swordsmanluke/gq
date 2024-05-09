@@ -111,7 +111,11 @@ module Gq
 
     def create_branches(toml_data)
       toml_data.each do |bn, attrs|
-        @branches[bn] = StackNode.new(bn, attrs['head'], attrs['parent'])
+        if git.branches.include? bn
+          @branches[bn] = StackNode.new(bn, attrs['head'], attrs['parent'])
+        else
+          puts "#{bn} is missing. Did you manually delete it?"
+        end
       end
 
       @branches.values.each do |branch|
