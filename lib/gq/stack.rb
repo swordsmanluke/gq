@@ -80,10 +80,10 @@ module Gq
 
     def up
       # Move away from the root, from the current node to a child
+      git.checkout(@branches[git.current_branch.name].children.first.name)
     end
 
     def down
-      load_file if @branches.empty?
       git.checkout(@branches[git.current_branch.name].parent)
     end
 
