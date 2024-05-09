@@ -4,7 +4,7 @@ require 'toml'
 
 module Gq
   StackNode = Struct.new(:name, :head, :parent, :children) do
-    def initialize(branch_name, head, parent=nil, children=[])
+    def initialize(branch_name, head, parent = nil, children = [])
       super(branch_name, head, parent, children)
     end
 
@@ -23,9 +23,9 @@ module Gq
   end
 
   class Stack
-    attr_reader :git
+    attr_reader :git, :branches
 
-    def initialize(git_client=::Gq::Git)
+    def initialize(git_client = ::Gq::Git)
       @git = git_client
       @branches = {}
     end
@@ -36,6 +36,15 @@ module Gq
 
     def exists?
       File.exist? config_file_path
+    end
+
+    def stack
+      node = branches[git.current_branch.name]
+      [[node.name, git.commit_diff(node.name, node.parent)]].tap do |stk|
+        while(node = branches[node.parent])
+          stk << [node.name, git.commit_diff(node.name, node.parent)]
+        end
+      end
     end
 
     def load_file
@@ -56,17 +65,17 @@ module Gq
       git.ignore('.gq/stack.toml')
     end
 
-    def add_branch(branch, parent=nil)
+    def add_branch(branch, parent = nil)
       self_destruct "Branch already exists: #{branch.name}" if @branches.key?(branch.name)
 
-      @branches[branch.name] = StackNode.new(branch.name, branch.sha, parent)
+      @branches[branch.name] = StackNode.new(branch.name, branch.sha, parent&.name)
       save!
     end
 
     def create_branch(new_branch)
       parent = git.current_branch
-      git.new_branch(new_branch)
-      add_branch(new_branch, parent)
+      new_br = git.new_branch(new_branch)
+      add_branch(new_br, parent)
     end
 
     def up
@@ -74,12 +83,13 @@ module Gq
     end
 
     def down
-      # Move toward the root
+      load_file if @branches.empty?
+      git.checkout(@branches[git.current_branch.name].parent)
     end
 
     def save!
       nodes = @branches.values
-      Dir.mkdir(File.dirname(config_file_path))
+      Dir.mkdir(File.dirname(config_file_path)) unless Dir.exist? File.dirname(config_file_path)
       File.open(config_file_path, "w") do |f|
         while nodes.any?
           node = nodes.shift
@@ -102,6 +112,10 @@ module Gq
     def create_branches(toml_data)
       toml_data.each do |bn, attrs|
         @branches[bn] = StackNode.new(bn, attrs['head'], attrs['parent'])
+      end
+
+      @branches.values.each do |branch|
+        @branches[branch.parent]&.tap { |p| p.add_child(branch) }
       end
     end
   end

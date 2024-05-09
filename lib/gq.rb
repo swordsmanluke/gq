@@ -57,6 +57,10 @@ Usage:
         self_destruct "Not implemented yet!"
       when "bc" # Create branch
         stack.create_branch(ARGV.shift)
+      when "log"
+        stack.stack.each do |(bn, diff)|
+          puts "#{bn}:\n#{diff}"
+        end
       when "up"
         stack.up
       when "down"
