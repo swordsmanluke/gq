@@ -19,6 +19,28 @@ def yellow(string)
 end
 
 module Gq
+
+  class Shell
+    # Helper methods for working with the shell
+    def prompt(message, *flags, options: nil, placeholder: nil)
+      args = []
+      mode = if options
+               'choose'
+               args += options
+             elsif flags.include?(:multiline)
+               'write'
+             else
+               'input'
+             end
+
+      args << "--placeholder '#{placeholder}'" if placeholder
+
+      cmd = "gum #{mode} #{args.join ' '}".chomp
+      puts "#{message} -> #{cmd}"
+      `#{cmd}`.chomp
+    end
+  end
+
   class ShellResult
     attr_reader :stdout, :stderr, :exit_code
 
@@ -45,3 +67,4 @@ end
 def bash(command)
   Gq::ShellResult.new(*Open3.capture3(command))
 end
+

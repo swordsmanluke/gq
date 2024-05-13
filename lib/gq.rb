@@ -10,27 +10,24 @@ Usage:
    gq <git command> | <gq command>
 
    gq commands:
-     create <bn>: creates and switches to a new branch named <bn>
+     init:     initialize a new gq stack - run once in a git repo
 
-     up:     move away from the root
+     create:   create and switch to a new branch
 
-     down:   move toward the root
+     commit:   create a new commit
 
-     sync:   pull root, then restack everything on the current stack
+     checkout: switch to a different branch
 
-     move:   change the parent of the current branch and rebase this branch and its descendents
+     log:      show the current commit stack
 
-     squash: move the current branch's commits to its parent and delete this branch
+     update:   pull root, then rebase everything on the remote changes
 
-  These override existing git commands:
-     commit:                   create a new git commit
+     right:    move away from root
 
-     checkout [bn]:            check out a branch - if no branch name provided, provides a UI for the checkout
+     left:     move toward root
 
-     push [branch|down|stack]: push selected branch(es) to the repo. Defaults to `stack`
-       * branch: Push just the current branch to `origin`
-       * down:   Push the current branch and all modifications below it
-       * stack:  Push the entirety of the current stack, including up-stack changes
+     switch:   change the parent of the current branch and rebase this branch and its descendents on the parent
+
 """
 
   class Gq
@@ -52,9 +49,9 @@ Usage:
       case cmd
       when "init"
         stack.initialize_stack
-      when "cc" # Commit
-        self_destruct "Not implemented yet!"
-      when "bc" # Create branch
+      when "cc", "commit" # Commit
+        stack.commit(ARGV.join(" "))
+      when "bc", "create" # Create branch
         stack.create_branch(ARGV.shift)
       when "log"
         stack.stack.each do |(bn, diff)|
@@ -72,7 +69,6 @@ Usage:
         puts "unknown command #{cmd}"
       end
     end
-
   end
 end
 

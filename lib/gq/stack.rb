@@ -47,6 +47,10 @@ module Gq
       end
     end
 
+    def commit(commit_msg)
+      @git.commit(commit_msg)
+    end
+
     def load_file
       self_destruct "1. No stack config found - have you run `gq init`?" unless exists?
       load_toml(File.read(config_file_path))
