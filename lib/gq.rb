@@ -47,7 +47,6 @@ Usage:
       self_destruct USAGE if ARGV.size < 1
 
       cmd = ARGV.shift
-      puts "Operation: #{cmd}"
       self_destruct 'gq has not been initialized - please run gq init' unless stack.exists? or cmd == "init"
 
       case cmd
