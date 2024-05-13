@@ -50,7 +50,7 @@ Usage:
       when "init"
         stack.initialize_stack
       when "cc", "commit" # Commit
-        stack.commit(ARGV.join(" "))
+        stack.commit(ARGV)
       when "bc", "create" # Create branch
         stack.create_branch(ARGV.shift)
       when "log"

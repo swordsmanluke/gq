@@ -47,8 +47,15 @@ module Gq
       end
     end
 
-    def commit(commit_msg)
-      @git.commit(commit_msg)
+    def commit(commit_args)
+      commit_args.map! { |arg| arg.include?(' ') ? "\"#{arg}\"" : arg }
+
+      unless commit_args.include? '-m' or commit_args.include? '--message' or commit_args.include? '-am'
+        commit_args << '-m'
+        commit_args << Shell.prompt("Commit message", :multiline, placeholder: "Enter your commit message, CTRL-D to finish.")
+                            .then { |msg| "\"#{msg}\"" } # quote the message
+      end
+      @git.commit(commit_args.join(' '))
     end
 
     def load_file

@@ -22,7 +22,7 @@ module Gq
 
   class Shell
     # Helper methods for working with the shell
-    def prompt(message, *flags, options: nil, placeholder: nil)
+    def self.prompt(message, *flags, options: nil, placeholder: nil)
       args = []
       mode = if options
                'choose'
@@ -36,7 +36,7 @@ module Gq
       args << "--placeholder '#{placeholder}'" if placeholder
 
       cmd = "gum #{mode} #{args.join ' '}".chomp
-      puts "#{message} -> #{cmd}"
+      puts message
       `#{cmd}`.chomp
     end
   end

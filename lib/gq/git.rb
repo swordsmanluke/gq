@@ -60,17 +60,9 @@ module Gq
         current_branch
       end
 
-      def commit(message=nil)
+      def commit(args)
         self_destruct("Not in a git repository") unless in_git_repo
-        args = []
-        if message.nil? or message.empty?
-          message = Shell.new.prompt("Commit message:", :multiline)
-        end
-
-        args << "-m '#{message}'"
-
-        args = args.join(' ')
-        cmd = ["git commit -a", args].join(' ')
+        cmd = ["git commit", args].join(' ')
         puts "> #{cmd}"
         `#{cmd}`
       end
