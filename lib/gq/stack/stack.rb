@@ -23,10 +23,12 @@ module Gq::Stack
     end
 
     def self.from_config
+      puts "Reloading from local config..."
       new(StackFile.load_config_file)
     end
 
     def self.refresh(git=::Gq::Git)
+      puts "Reloading from local git..."
       # Read branches from git and rebuild the stack, based on the current branches
       branches = {}
       git.branches.each do |branch|
@@ -117,6 +119,8 @@ module Gq::Stack
           # TODO: If a parent branch is missing... what do?
           branches[branch.parent].children << branch.name
         end
+
+        branches
       end
 
       def load_stack_nodes(toml_data)

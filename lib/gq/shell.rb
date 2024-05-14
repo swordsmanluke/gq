@@ -26,7 +26,7 @@ module Gq
       args = []
       mode = if options
                'choose'
-               args += options
+               args += options.join(" ")
              elsif flags.include?(:multiline)
                'write'
              else
