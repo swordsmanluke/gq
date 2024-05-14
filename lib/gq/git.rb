@@ -46,16 +46,28 @@ module Gq
         Branch.new(name, sha)
       end
 
-      def branches
+      def parent_of(branch_name)
         self_destruct("Not in a git repository") unless in_git_repo
-        bash("git branch --format='%(refname:short)'").stdout.split("\n")
+
+        parents[branch_name]
       end
 
-      def new_branch(branch_name)
+      def branches
         self_destruct("Not in a git repository") unless in_git_repo
 
-        parent = current_branch
-        bash("git checkout -t #{parent.name} -b #{branch_name}")
+        bash("git branch --format='%(refname:short) %(objectname:short)'")
+          .stdout
+          .split("\n")
+          .map { |name_and_hash| Branch.new(*name_and_hash.split(" ")) }
+      end
+
+      def new_branch(branch_name, tracking: nil)
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        args = ["-b #{branch_name}"]
+        args << "--track #{tracking}" if tracking
+
+        bash("git checkout #{args.join(' ')}")
           .tap { |res| self_destruct("Failed to create branch: #{red(branch_name)}\n#{res.output}") if res.failure? }
         current_branch
       end
@@ -73,6 +85,23 @@ module Gq
         def initialize(name, sha)
           @name = name; @sha = sha
         end
+      end
+
+      def remotes
+        bash("git remote").stdout.split("\n")
+      end
+
+      def parents
+        bash("git branch -vv")
+          .stdout
+          .chomp
+          .split("\n")
+          .map { |line| line.split(' ') }
+          .compact
+          .map { |name, *rest| name != '*' ? [name, *rest] : rest }
+          .map { |name, _, parent| [name, parent[1...-1]] }
+          .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
+          .to_h
       end
     end
   end
