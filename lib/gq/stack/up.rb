@@ -14,14 +14,13 @@ class Up < Command
     # Checkout the next child of the current branch
     # Prompting the user if there are multiple children
     # or printing an error if there are none.
-    current = @stack.branches[@git.current_branch.name]
+    current = @stack.current_branch
     if current.children.empty?
       self_destruct "You are already at the top of the stack."
     elsif current.children.size == 1
-      @git.checkout(current.children.first.name)
+      @git.checkout(current.children.first)
     else
-      child_names = current.children.map(&:name).join(", ")
-      child = ::Gq::Shell.prompt("Multiple branches - choose one", options: child_names)
+      child = ::Gq::Shell.prompt("Multiple branches - choose one", options: current.children)
       @git.checkout(child) if child
     end
   end

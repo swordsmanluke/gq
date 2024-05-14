@@ -25,8 +25,8 @@ module Gq
     def self.prompt(message, *flags, options: nil, placeholder: nil)
       args = []
       mode = if options
+               args << options.join(" ")
                'choose'
-               args += options.join(" ")
              elsif flags.include?(:multiline)
                'write'
              else
@@ -36,6 +36,8 @@ module Gq
       args << "--placeholder '#{placeholder}'" if placeholder
 
       cmd = "gum #{mode} #{args.join ' '}".chomp
+      puts "> #{cmd}"
+
       puts message
       `#{cmd}`.chomp
     end

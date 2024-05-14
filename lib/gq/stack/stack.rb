@@ -67,10 +67,15 @@ module Gq::Stack
 
     private
     def link_parents(branches)
+      puts"linking parents...(1)"
       branches.values.each do |branch|
         next if branch.parent.nil? || branch.parent.empty?
-        branches[branch.parent].children << branch
+        branches[branch.parent].children << branch.name
       end
+
+      puts "Parents to children: #{branches.values.map { |b| [b.name, b.children] }.to_h}"
+
+      branches
     end
 
   end
@@ -94,7 +99,7 @@ module Gq::Stack
 
       def load_toml(stack_str)
         toml_data = TOML::Parser.new(stack_str).parsed
-        link_parents(load_stack_nodes(toml_data))
+        load_stack_nodes(toml_data)
       end
 
       def save(branches)
@@ -112,16 +117,6 @@ module Gq::Stack
       end
 
       private
-
-      def link_parents(branches)
-        branches.values.each do |branch|
-          next if branch.parent.nil? || branch.parent.empty?
-          # TODO: If a parent branch is missing... what do?
-          branches[branch.parent].children << branch.name
-        end
-
-        branches
-      end
 
       def load_stack_nodes(toml_data)
         branches = {}
