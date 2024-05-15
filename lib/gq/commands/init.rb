@@ -2,7 +2,7 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq::Stack
+module Gq
 class Init < Command
   COMMAND = ["init"]
 
@@ -11,9 +11,9 @@ class Init < Command
   end
 
   def call(*args)
-    self_destruct "Already initialized" if @stack.exists?
+    self_destruct "Already initialized" if StackFile.exists?
     @stack = Stack.refresh(@git)
-    @git.ignore('.gq/stack.toml')
+    @git.ignore('.gq/commands.toml')
   end
 end
 end

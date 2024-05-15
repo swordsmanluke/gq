@@ -79,14 +79,6 @@ module Gq
         `#{cmd}`
       end
 
-      class Branch
-        attr_reader :name, :sha
-
-        def initialize(name, sha)
-          @name = name; @sha = sha
-        end
-      end
-
       def remotes
         bash("git remote").stdout.split("\n")
       end
@@ -103,6 +95,14 @@ module Gq
           .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
           .to_h
       end
+    end
+  end
+
+  class Branch
+    attr_reader :name, :sha
+
+    def initialize(name, sha)
+      @name = name; @sha = sha
     end
   end
 end

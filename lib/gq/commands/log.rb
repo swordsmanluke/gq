@@ -2,12 +2,12 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq::Stack
+module Gq
 class Log < Command
   COMMAND = ["log"]
 
   def self.documentation
-    "List the branches in the current stack."
+    "List the branches in the current commands."
   end
 
   def call(*args)

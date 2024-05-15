@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Gq::Stack
+module Gq
   class Command
     COMMAND = ["command", "cmd"]
 

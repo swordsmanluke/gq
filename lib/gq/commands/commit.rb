@@ -2,7 +2,7 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq::Stack
+module Gq
 class Commit < Command
   COMMAND = ["commit", "cc"]
 

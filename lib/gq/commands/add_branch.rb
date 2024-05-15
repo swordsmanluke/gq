@@ -2,12 +2,12 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq::Stack
+module Gq
   class AddBranch < Command
     COMMAND = ["create", "bc"]
 
     def self.documentation
-      "Create a new branch and add it to the current stack."
+      "Create a new branch and add it to the current commands."
     end
 
     def call(*args)

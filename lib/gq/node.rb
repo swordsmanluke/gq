@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Gq::Stack
+module Gq
   Node = Struct.new(:name, :head, :parent, :children) do
     def initialize(branch_name, head, parent: nil, children: [])
       super(branch_name, head, parent, children)

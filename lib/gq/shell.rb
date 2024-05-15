@@ -19,7 +19,6 @@ def yellow(string)
 end
 
 module Gq
-
   class Shell
     # Helper methods for working with the shell
     def self.prompt(message, *flags, options: nil, placeholder: nil)

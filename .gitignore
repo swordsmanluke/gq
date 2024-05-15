@@ -6,8 +6,10 @@
 /pkg/
 /spec/reports/
 /tmp/
+/.idea/
 
 # rspec failure tracking
 .rspec_status
 gq.iml
 .gq/stack.toml
+.gq/commands.toml

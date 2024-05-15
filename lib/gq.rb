@@ -2,7 +2,7 @@
 
 require_relative "gq/version"
 require_relative 'gq/shell'
-require_relative 'gq/stack/stack'
+require_relative 'gq/stack'
 require_relative 'gq/git'
 
 module Gq
@@ -18,8 +18,8 @@ Usage:
 
     def initialize
       @git = ::Gq::Git
-      @stack = ::Gq::Stack::Stack.new(git)
-      @stack = ::Gq::Stack::Stack.from_config if ::Gq::Stack::StackFile.exists?
+      @stack = ::Gq::Stack.new(git)
+      @stack = ::Gq::Stack.from_config if ::Gq::StackFile.exists?
     end
 
     def run
@@ -27,11 +27,11 @@ Usage:
       self_destruct USAGE if ARGV.size < 1
 
       cmd = ARGV.shift
-      self_destruct 'gq has not been initialized - please run gq init' unless ::Gq::Stack::StackFile.exists? or cmd == "init"
+      self_destruct 'gq has not been initialized - please run gq init' unless ::Gq::StackFile.exists? or cmd == "init"
 
-      lj = ::Gq::Stack::Stack::COMMANDS.map { |cmd| cmd::COMMAND.join(", ").length }.max + 5
+      lj = ::Gq::Stack::COMMANDS.map { |cmd| cmd::COMMAND.join(", ").length }.max + 5
 
-      commands = ::Gq::Stack::Stack::COMMANDS
+      commands = ::Gq::Stack::COMMANDS
                 .map { |cmd| "      #{(cmd::COMMAND.join(", ")+":").ljust(lj)}#{cmd.documentation}" }
                 .join("\n")
 

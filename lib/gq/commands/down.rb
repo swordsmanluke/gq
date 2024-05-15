@@ -2,12 +2,12 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq::Stack
+module Gq
 class Down < Command
   COMMAND = ["down", "bd"]
 
   def self.documentation
-    "Move down the stack toward the root."
+    "Move down the commands toward the root."
   end
 
   def call(*args)
@@ -15,7 +15,7 @@ class Down < Command
     # or print an error if there is no parent.
     current = @stack.branches[@git.current_branch.name]
     if current.parent.nil? || current.parent.empty?
-      self_destruct "You are already at the bottom of the stack."
+      self_destruct "You are already at the bottom of the commands."
     else
       @git.checkout(current.parent)
     end

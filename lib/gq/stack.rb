@@ -1,20 +1,21 @@
 # frozen_string_literal: true
 require 'toml'
 require_relative 'node'
-require_relative '../shell'
-require_relative 'up'
-require_relative 'down'
-require_relative 'log'
-require_relative 'init'
-require_relative 'add_branch'
-require_relative 'commit'
+require_relative 'shell'
 
-module Gq::Stack
+# Require all commands
+Dir.glob(File.dirname(__FILE__) + '/commands/*.rb').each { |f| require f }
+
+module Gq
   class Stack
     attr_reader :branches
 
     COMMANDS = [
-      Init, Up, Down, Log, AddBranch, Commit
+      Init,
+      Up, Down,
+      Log,
+      AddBranch,
+      Commit
     ]
 
     def initialize(branches={}, git: ::Gq::Git)
@@ -29,10 +30,10 @@ module Gq::Stack
 
     def self.refresh(git=::Gq::Git)
       puts "Reloading from local git..."
-      # Read branches from git and rebuild the stack, based on the current branches
+      # Read branches from git and rebuild the commands, based on the current branches
       branches = {}
       git.branches.each do |branch|
-        branches[branch.name] = Gq::Stack::Node.new(branch.name, branch.sha, parent: git.parent_of(branch.name))
+        branches[branch.name] = ::Gq::Node.new(branch.name, branch.sha, parent: git.parent_of(branch.name))
       end
       branches = link_parents(branches)
 
@@ -66,7 +67,7 @@ module Gq::Stack
     end
 
     private
-    def link_parents(branches)
+    def self.link_parents(branches)
       puts"linking parents...(1)"
       branches.values.each do |branch|
         next if branch.parent.nil? || branch.parent.empty?
@@ -85,7 +86,7 @@ module Gq::Stack
 
       def config_file_path
         git = ::Gq::Git
-        "#{git.root_dir}/.gq/stack.toml"
+        "#{git.root_dir}/.gq/commands.toml"
       end
 
       def exists?
@@ -93,7 +94,7 @@ module Gq::Stack
       end
 
       def load_config_file
-        self_destruct "1. No stack config found - have you run `gq init`?" unless exists?
+        self_destruct "1. No commands config found - have you run `gq init`?" unless exists?
         load_toml(File.read(config_file_path))
       end
 
