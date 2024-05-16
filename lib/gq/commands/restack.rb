@@ -6,7 +6,7 @@ module Gq
 class Restack < Command
   COMMAND = ["restack"]
 
-  def initialize(stack, git = nil)
+  def initialize(stack, git=::Gq::Git)
     super(stack, git)
     @queue = []
   end

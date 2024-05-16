@@ -46,14 +46,17 @@ module Gq
 
     def root
       branch = current_branch
-      while branch.parent
+      puts "BRANCH: #{branch&.name}"
+      while branch.parent != ''
         branch = branches[branch.parent]
+        puts "BRANCH: #{branch&.name}"
       end
       branch
     end
 
     def current_branch
-      branches[@git.current_branch.name]
+      puts "Current branch Git: #{@git.current_branch.name}(#{@git.current_branch.sha[0..6]})"
+      branches[@git.current_branch.name].tap { |b| puts "Current branch: #{b&.name} (#{branches.keys.join(', ')})" }
     end
 
     def add_branch(branch, parent = nil)

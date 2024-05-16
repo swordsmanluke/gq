@@ -105,9 +105,9 @@ module Gq
       self_destruct("Not in a git repository") unless in_git_repo
 
       bash("git checkout #{branch}",
-           or_fn: -> (_) { self.destruct "Could not checkout #{branch} to rebase on #{parent}." })
+           or_fn: -> (_) { self_destruct "Could not checkout #{branch} to rebase on #{parent}." })
       bash("git rebase #{parent}",
-           or_fn: -> (_) { self.destruct "Rebase #{branch} -> #{parent} failed. Run git mergetool then git rebase --continue" })
+           or_fn: -> (_) { self_destruct "Rebase #{branch} -> #{parent} failed. Run git mergetool then git rebase --continue" })
     end
 
     def self.delete_branch(branch)
