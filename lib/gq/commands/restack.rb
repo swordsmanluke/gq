@@ -18,15 +18,15 @@ class Restack < Command
   def call(*args)
     push(@stack.root)
 
-    cur_branch = @git.current_branch
+    cur_branch = @git.current_branch.name
 
     while (branch = pop)
-      parent = @git.parent_of(branch.name)
+      parent = @git.parent_of(branch)
       next if parent == ''
 
-      @git.rebase(branch.name, parent)
-      puts "Rebased #{branch.name&.cyan} -> #{parent&.cyan}"
-      branch.children.each { push _1 }
+      @git.rebase(branch, parent)
+      puts "Rebased #{branch.cyan} -> #{parent&.cyan}"
+      branches[branch].children.each { push _1 }
     end
 
     @git.checkout(cur_branch)
