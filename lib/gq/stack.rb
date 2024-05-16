@@ -45,8 +45,10 @@ module Gq
     end
 
     def root
-      branch = branches[@git.current_branch.name]
-      branch = branches[branch.parent] while branch.parent
+      branch = current_branch
+      while branch.parent
+        branch = branches[branch.parent]
+      end
       branch
     end
 
@@ -94,7 +96,7 @@ module Gq
 
       def config_file_path
         git = ::Gq::Git
-        "#{git.root_dir}/.gq/commands.toml"
+        "#{git.root_dir}/.gq/stack.toml"
       end
 
       def exists?
