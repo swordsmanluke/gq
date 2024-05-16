@@ -26,7 +26,7 @@ class Restack < Command
 
       @git.rebase(branch, parent)
       puts "Rebased #{branch.cyan} -> #{parent&.cyan}"
-      branches[branch].children.each { push _1 }
+      @stack.branches[branch].children.each { push _1 }
     end
 
     @git.checkout(cur_branch)
