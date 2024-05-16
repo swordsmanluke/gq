@@ -16,7 +16,7 @@ class Restack < Command
   end
 
   def call(*args)
-    push(@stack.root)
+    push(@stack.root.name)
 
     cur_branch = @git.current_branch.name
 
