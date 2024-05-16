@@ -15,7 +15,9 @@ module Gq
       Up, Down,
       Log,
       AddBranch,
-      Commit
+      Commit,
+      Restack,
+      Submit
     ]
 
     def initialize(branches={}, git: ::Gq::Git)

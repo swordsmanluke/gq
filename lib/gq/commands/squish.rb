@@ -27,7 +27,7 @@ class Squish < Command
     end
 
     @git.delete_branch(me)
-    @stack.sync
+    @stack = Stack.refresh(@git)
   end
 end
 end
