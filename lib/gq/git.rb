@@ -29,7 +29,11 @@ module Gq
         self_destruct("Not in a git repository") unless in_git_repo
         return "" if branch2.nil?
 
-        bash("git log #{branch2}..#{branch1} --format=oneline").output
+        bash("git log #{branch2}..#{branch1} --format=oneline")
+          .output
+          .split("\n")
+          .map { _1.split(" ") }
+          .map { [_1.shift, _1.join(" ")]} # Sha, followed by everything else
       end
 
       def ignore(path)
@@ -95,6 +99,15 @@ module Gq
           .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
           .to_h
       end
+    end
+
+    def self.rebase(branch, parent)
+      self_destruct("Not in a git repository") unless in_git_repo
+
+      bash("git checkout #{branch}",
+           or_fn: -> (_) { self.destruct "Could not checkout #{branch} to rebase on #{parent}." })
+      bash("git rebase #{parent}",
+           or_fn: -> (_) { self.destruct "Rebase #{branch} -> #{parent} failed. Run git mergetool then git rebase --continue" })
     end
   end
 
