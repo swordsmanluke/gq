@@ -44,6 +44,12 @@ module Gq
       new(branches)
     end
 
+    def root
+      branch = branches[@git.current_branch.name]
+      branch = branches[branch.parent] while branch.parent
+      branch
+    end
+
     def current_branch
       branches[@git.current_branch.name]
     end
