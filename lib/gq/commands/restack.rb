@@ -22,6 +22,8 @@ class Restack < Command
 
     while (branch = pop)
       parent = @git.parent_of(branch.name)
+      next if parent == ''
+
       @git.rebase(branch.name, parent)
       puts "Rebased #{branch.name&.cyan} -> #{parent&.cyan}"
       branch.children.each { push _1 }
