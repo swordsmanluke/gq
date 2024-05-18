@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require_relative './code_reviewer'
 require_relative '../shell'
+require 'octokit'
 
 class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
 
