@@ -41,13 +41,15 @@ module Gq
     def update_code_review(branch_name, parent)
       if @cr_client.review_exists?(branch_name, parent)
         puts "Updating code review"
-        @cr_client.update_review(branch_name, parent)
+        pr = @cr_client.update_review(branch_name, parent)
+        puts "#{yellow("Updated")} Review at: #{pr.html_url.cyan}"
       else
         if Shell.prompt?("Create a new review for #{branch_name.cyan}?")
           puts yellow("Creating code review") + " for #{branch_name.cyan}"
-          puts tree(@git.commits(branch_name).first.yellow, 1)
+          puts tree(@git.commits(branch_name).first.split("\n")[4..].join("\n").yellow, 1)
 
-          @cr_client.create_review(branch_name, parent)
+          pr = @cr_client.create_review(branch_name, parent)
+          puts "#{green("New")} Review at: #{pr.html_url.cyan}"
         else
           puts "No PR created"
         end
