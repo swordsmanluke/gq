@@ -28,7 +28,7 @@ module Gq
                end
 
       @git.fetch
-      @stack.current_stack.each do |branch_name|
+      @stack.current_stack.reverse.each do |branch_name|
         @git.push(branch_name, remote: origin)
         # TODO: Create (or update) code review request based on remote API
         # against the remote parent - assuming it exists, otherwise we err
