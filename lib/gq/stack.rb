@@ -69,7 +69,7 @@ module Gq
         stk << branch.parent
         branch = branches[branch.parent]
       end
-      stk.reverse
+      stk
     end
 
     def add_branch(branch, parent = nil)

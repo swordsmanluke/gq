@@ -27,7 +27,7 @@ module Gq
 
       def commit_diff(branch1, branch2)
         self_destruct("Not in a git repository") unless in_git_repo
-        return "" if branch2.nil?
+        return [] if branch2.nil?
 
         bash("git log #{branch2}..#{branch1} --format=oneline")
           .output
