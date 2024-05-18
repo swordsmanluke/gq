@@ -11,7 +11,15 @@ class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
     self_destruct "GITHUB_TOKEN environment variable not set" if token.nil?
     @client = Octokit::Client.new(access_token: token)
     @git = ::Gq::Git
-    repo_name = @git.remotes.first.split(?:).last.split('.git').first
+    repo_name = @git.remotes
+                    .map { @git.remote_url(_1)
+                               .split(?:)
+                               .last
+                               .split('.git')
+                               .first }
+                    .first
+
+
     @repo = @client
               .repos
               .map { |repo| repo.full_name }

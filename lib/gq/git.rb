@@ -99,6 +99,10 @@ module Gq
         bash("git remote").stdout.split("\n")
       end
 
+      def remote_url(remote)
+        bash("git remote get-url #{remote}").stdout
+      end
+
       def push(branch, remote: nil)
         self_destruct("Not in a git repository") unless in_git_repo
 
