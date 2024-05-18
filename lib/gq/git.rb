@@ -130,6 +130,7 @@ module Gq
         bash("git log -#{count} #{branch}")
           .stdout
           .split(/^commit [a-f0-9]+$/)
+          .reject { _1.empty? }
       end
 
       private

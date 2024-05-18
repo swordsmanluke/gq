@@ -43,7 +43,7 @@ class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def create_review(branch_name, base = nil, title = nil, body = nil)
     parent = @git.parent_of(branch_name)
-    message = @git.commits(branch_name).first.split("\n")[4..].join("\n")
+    message = @git.commits(branch_name).first.split("\n")[4..].map(&:strip).join("\n")
     title ||= message.split("\n").shift
     body ||= message.split("\n")[1..].join("\n")
 
