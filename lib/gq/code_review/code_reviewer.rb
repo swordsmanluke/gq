@@ -6,7 +6,7 @@ class Gq::CodeReview::CodeReviewer
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 
-  def find_reviews(branch_name, base = nil)
+  def reviews(branch_name, base = nil)
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 

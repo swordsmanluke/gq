@@ -7,7 +7,7 @@ class Gq::CodeReview::MockReviewer < Gq::CodeReview::CodeReviewer
     false
   end
 
-  def find_reviews(branch_name, base = nil)
+  def reviews(branch_name, base = nil)
     []
   end
 

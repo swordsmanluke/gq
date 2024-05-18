@@ -122,6 +122,13 @@ module Gq
           .to_h
       end
 
+      def commits(branch=current_branch.name, count=10)
+        bash("git log -#{count} --oneline #{branch}")
+          .stdout
+          .split("\n")
+          .take(count)
+      end
+
       private
 
       def extract_parent(parent)
