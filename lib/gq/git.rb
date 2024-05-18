@@ -123,10 +123,9 @@ module Gq
       end
 
       def commits(branch=current_branch.name, count=10)
-        bash("git log -#{count} --oneline #{branch}")
+        bash("git log -#{count} #{branch}")
           .stdout
-          .split("\n")
-          .take(count)
+          .split(/^commit [a-f0-9]+$/)
       end
 
       private

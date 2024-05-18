@@ -44,6 +44,9 @@ module Gq
         @cr_client.update_review(branch_name, parent)
       else
         if Shell.prompt?("Create a new review for #{branch_name.cyan}?")
+          puts yellow("Creating code review") + " for #{branch_name.cyan}"
+          puts indent(@git.commits(branch_name).first.blue, 1)
+
           @cr_client.create_review(branch_name, parent)
         else
           puts "No PR created"

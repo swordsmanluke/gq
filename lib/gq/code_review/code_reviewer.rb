@@ -10,7 +10,7 @@ class Gq::CodeReview::CodeReviewer
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 
-  def create_review(branch_name, base = nil)
+  def create_review(branch_name, base = nil, title = nil, body = nil)
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 
@@ -18,7 +18,7 @@ class Gq::CodeReview::CodeReviewer
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 
-  def approve_review(branch_name, base = nil)
+  def merge_review(branch_name, base = nil)
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 end

@@ -20,8 +20,8 @@ class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def review_exists?(branch_name, base = nil)
     reviews(branch_name, base)
-           .select { |pr| pr.head.ref == branch_name }
-           .any?
+      .select { |pr| pr.head.ref == branch_name }
+      .any?
   end
 
   def reviews(branch_name, base = nil)
@@ -33,24 +33,25 @@ class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def create_review(branch_name, base = nil, title = nil, body = nil)
     parent = @git.parent_of(branch_name)
-    title ||= @git.commits(branch_name).first.message.split("\n").first
-    body ||= @git.commits(branch_name).first.message.split("\n").last
-    pr = @client.create_pull_request(
+    message = @git.commits(branch_name).first.split("\n")[4..].join("\n")
+    title ||= message.split("\n").shift
+    body ||= message.split("\n")[1..].join("\n")
+
+    @client.create_pull_request(
       @repo,
       parent,
       branch_name,
-      "Created by gq",
-      "Created by gq"
-    )
+      title,
+      body)
   end
 
   def update_review(branch_name, base = nil)
-    puts "updated (mock) review"
-    true
+    # No action needed here - pushing is all that's required. Just return the pr
+    reviews(branch_name, base).first
   end
 
-  def approve_review(branch_name, base = nil)
-    puts "approved (mock) review"
-    true
+  def merge_review(branch_name, base = nil)
+    # TODO
+    super
   end
 end

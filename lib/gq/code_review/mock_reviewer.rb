@@ -11,7 +11,7 @@ class Gq::CodeReview::MockReviewer < Gq::CodeReview::CodeReviewer
     []
   end
 
-  def create_review(branch_name, base = nil)
+  def create_review(branch_name, base = nil, title = nil, body = nil)
     puts "created (mock) review"
     true
   end
