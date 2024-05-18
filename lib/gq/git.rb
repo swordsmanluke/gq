@@ -106,7 +106,7 @@ module Gq
         checkout(branch)
         bash("git push #{remote} #{branch}")
           .tap { checkout og_branch }  # Restore the original branch after attempting the push, either success or failure
-          .then { self_destruct("Failed to push branch: #{red(branch)}") if _1.failure? }
+          .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
       end
 
       def parents
