@@ -88,16 +88,23 @@ module Gq
       end
 
       def parents
+        parent_regex = /(.*\s+[a-f0-9]+)(\s+\[(.*)\])?\s+(.*)/
         bash("git branch -vv")
           .stdout
           .chomp
           .split("\n")
-          .map { |line| line.split(' ') }
-          .compact
-          .map { |name, *rest| name != '*' ? [name, *rest] : rest }
-          .map { |name, _, parent| [name, parent[1...-1]] }
+          .map { |line| parent_regex.match(line) }
+          .map { |match| [match[1].split(' ').reject{_1==?*}.first, match[3]] }
+          .map { |name, parent| [name, extract_parent(parent)] }
           .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
           .to_h
+      end
+
+      private
+
+      def extract_parent(parent)
+        return "" if parent.nil? or parent.empty?
+        parent.split(":").first
       end
     end
 
