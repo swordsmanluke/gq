@@ -32,7 +32,7 @@ module Gq
         @git.push(branch_name, remote: origin)
         # TODO: Create (or update) code review request based on remote API
         # against the remote parent - assuming it exists, otherwise we err
-        parent = @git.parent_of(branch_name).name
+        parent = @git.parent_of(branch_name)
         next if parent == '' # We may be updating the root branch, which has no parent
         update_code_review(branch_name, parent)
       end
