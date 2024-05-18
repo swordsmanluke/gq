@@ -15,7 +15,8 @@ class Sync < Command
     @git.fetch
 
     @stack.current_stack.reverse.each do |branch|
-      @git.pull
+      @git.pull(remote: @git.remotes.first, remote_branch: branch)
+
       parent = @git.parent_of(branch)
       next if parent == '' # We may be updating the root branch, which has no parent
 
