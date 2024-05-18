@@ -17,20 +17,20 @@ class Sync < Command
     @stack.current_stack.reverse.each do |branch|
       puts "Rebasing #{branch.cyan}..."
 
-      unless @git.branches(:remote).include?("#{@git.remotes.first}/#{branch}")
+      unless @git.branches(:remote).map(&:name).include?("#{@git.remotes.first}/#{branch}")
         if Shell.prompt?("Remote branch #{branch.cyan} does not exist. Delete?")
           puts "Deleting #{branch.cyan}..."
           parent = @git.parent_of(branch)
-          @stack[branch].children.each do |child|
+          @stack.branches[branch].children.each do |child|
             puts indent("Setting parent of #{child.cyan} to #{parent.cyan}".green)
-            @stack[child].parent = parent
+            @stack.branches[child].parent = parent
             @git.track(child, parent)
           end
           puts indent("Deleting #{branch.cyan}".red)
           @git.checkout('master')
           @git.branch("-D", branch)
         end
-        
+
         next
       end
 
