@@ -73,10 +73,13 @@ module Gq
         parents[branch_name]
       end
 
-      def branches
+      def branches(type=:local)
         self_destruct("Not in a git repository") unless in_git_repo
 
-        bash("git branch --format='%(refname:short) %(objectname:short)'")
+        cmd = "git branch --format='%(refname:short) %(objectname:short)'"
+        cmd += " -r" if type == :remote
+
+        bash(cmd)
           .stdout
           .split("\n")
           .map { |name_and_hash| Branch.new(*name_and_hash.split(" ")) }
@@ -158,6 +161,20 @@ module Gq
     def self.delete_branch(branch)
       self_destruct("Not in a git repository") unless in_git_repo
       bash("git branch -D #{branch}")
+    end
+
+    def self.track(child, parent)
+      self_destruct("Not in a git repository") unless in_git_repo
+      og_branch = if current_branch != child
+                    current_branch
+                    checkout(child)
+                  else
+                    nil
+                  end
+
+      bash("git branch --set-upstream-to=#{parent}")
+        .tap { checkout(og_branch) if og_branch }
+        .tap { self_destruct("Failed to track branch: #{red(child)}") if _1.failure? }
     end
   end
 
