@@ -43,7 +43,7 @@ module Gq
         puts "Updating code review"
         @cr_client.update_review(branch_name, parent)
       else
-        if Shell.prompt("Create a new review for #{branch_name.cyan}?", options: ["y", "n"]) == 'y'
+        if Shell.prompt?("Create a new review for #{branch_name.cyan}?")
           @cr_client.create_review(branch_name, parent)
         else
           puts "No PR created"

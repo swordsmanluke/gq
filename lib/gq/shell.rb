@@ -74,6 +74,10 @@ module Gq
       puts message
       `#{cmd}`.chomp
     end
+
+    def self.prompt?(message, *flags, options: ['y', 'n'], selected: 'y')
+      Shell.prompt(message, *flags, options: options) == selected
+    end
   end
 
   class ShellResult
