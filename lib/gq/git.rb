@@ -87,6 +87,16 @@ module Gq
         bash("git remote").stdout.split("\n")
       end
 
+      def push(branch, remote: nil)
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        og_branch = current_branch.name
+        checkout(branch)
+        bash("git push #{remote} #{branch}")
+          .tap { checkout og_branch }  # Restore the original branch after attempting the push, either success or failure
+          .then { self_destruct("Failed to push branch: #{red(branch)}") if _1.failure? }
+      end
+
       def parents
         parent_regex = /(.*\s+[a-f0-9]+)(\s+\[(.*)\])?\s+(.*)/
         bash("git branch -vv")
