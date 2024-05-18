@@ -8,6 +8,18 @@ module Gq
         `git rev-parse --is-inside-work-tree`.strip == 'true'
       end
 
+      def pull
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        bash("git pull", or_fn: -> (res) { self_destruct res.output })
+      end
+
+      def fetch
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        bash("git fetch", or_fn: -> (res) { self_destruct res.output })
+      end
+
       def checkout(branch_name)
         self_destruct("Not in a git repository") unless in_git_repo
 
