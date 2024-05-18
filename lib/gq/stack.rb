@@ -11,13 +11,15 @@ module Gq
     attr_reader :branches
 
     COMMANDS = [
-      Init,
-      Up, Down,
-      Log,
       AddBranch,
       Commit,
+      Down,
+      Init,
+      Log,
       Restack,
-      Submit
+      Sync,
+      Submit,
+      Up,
     ]
 
     def initialize(branches={}, git: ::Gq::Git)
