@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require_relative './code_reviewer'
+require_relative './code_reviewer/github_reviewer'
 require_relative '../shell'
 
 class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
