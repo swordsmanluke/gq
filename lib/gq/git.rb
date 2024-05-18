@@ -8,10 +8,15 @@ module Gq
         `git rev-parse --is-inside-work-tree`.strip == 'true'
       end
 
-      def pull
+      def pull(remote: nil, remote_branch: nil)
         self_destruct("Not in a git repository") unless in_git_repo
+        if remote && remote_branch
+          cmd = "git pull #{remote} #{remote_branch}"
+        else
+          cmd = "git pull"
+        end
 
-        bash("git pull", or_fn: -> (res) { self_destruct res.output })
+        bash(cmd, or_fn: -> (res) { self_destruct res.output })
       end
 
       def fetch
