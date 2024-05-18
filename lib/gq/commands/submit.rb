@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require_relative '../shell'
-require_relative '../code_review/mock_reviewer'
+require_relative '../code_review/github_reviewer'
 require_relative 'command'
 
 module Gq
