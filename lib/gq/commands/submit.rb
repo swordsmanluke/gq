@@ -7,7 +7,7 @@ module Gq
   class Submit < Command
     COMMAND = ["submit"]
 
-    def initialize(stack, git=Git, code_review_client=CodeReview::MockReviewer)
+    def initialize(stack, git=Git, code_review_client=CodeReview::MockReviewer.new)
       super(stack, git)
       @cr_client = code_review_client
     end
