@@ -2,8 +2,9 @@
 require_relative './code_reviewer'
 
 class Gq::CodeReview::MockReviewer < Gq::CodeReview::CodeReviewer
+  
   def review_exists?(branch_name, base = nil)
-    true
+    false
   end
 
   def find_reviews(branch_name, base = nil)
