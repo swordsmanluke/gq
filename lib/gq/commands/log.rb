@@ -2,8 +2,7 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
-class Log < Command
+class Gq::Log < Gq::Command
   COMMAND = ["log"]
 
   def self.documentation
@@ -11,9 +10,8 @@ class Log < Command
   end
 
   def call(*args)
-    @stack.branches.each do |name, node|
-      puts "#{name} -> #{node.parent}"
+    @stack.current_stack.each do |name|
+      puts name
     end
   end
-end
 end

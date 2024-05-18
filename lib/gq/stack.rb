@@ -55,8 +55,21 @@ module Gq
     end
 
     def current_branch
-      puts "Current branch Git: #{@git.current_branch.name}(#{@git.current_branch.sha[0..6]})"
-      branches[@git.current_branch.name].tap { |b| puts "Current branch: #{b&.name} (#{branches.keys.join(', ')})" }
+      branches[@git.current_branch.name]
+    end
+
+    def current_stack
+      stack_for(current_branch.name)
+    end
+
+    def stack_for(branch)
+      stk = [branch]
+      branch = branches[branch]
+      while branch.parent != ''
+        stk << branch.parent
+        branch = branches[branch.parent]
+      end
+      stk.reverse
     end
 
     def add_branch(branch, parent = nil)
