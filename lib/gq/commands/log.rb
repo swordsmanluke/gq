@@ -31,8 +31,8 @@ module Gq
       return "" if parent_branch.nil? || cur_branch.nil?
 
       @git.commit_diff(cur_branch, parent_branch)
-          .map { |(sha, msg)| "#{sha[0..6]} #{msg}" }
-          .then { |commits| commits.size > max_len ? commits[0..max_len] + ["...(#{commits.size - max_len} more)"] : commits[0..max_len] }
+          .map { |(sha, msg)| "#{sha[0..6].grey} #{msg}" }
+          .then { |commits| commits.size > max_len ? commits[0..max_len] + ["    ... (#{commits.size - max_len} more)".grey] : commits[0..max_len] }
           .join("\n")
     end
   end

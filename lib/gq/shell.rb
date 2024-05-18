@@ -22,6 +22,10 @@ def cyan(string)
   string.cyan
 end
 
+def grey(string)
+  string.grey
+end
+
 def tree(string, depth, fill = "  ")
   indent(string, fill * depth)
 end
@@ -49,6 +53,10 @@ class String
 
   def cyan
     "\e[36m#{self}\e[0m"
+  end
+
+  def grey
+    "\e[90m#{self}\e[0m"
   end
 end
 
