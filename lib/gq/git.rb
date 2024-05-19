@@ -160,7 +160,7 @@ module Gq
 
     def self.delete_branch(branch)
       self_destruct("Not in a git repository") unless in_git_repo
-      bash("git branch -D #{branch}")
+      bash("git branch -d #{branch}")
     end
 
     def self.track(child, parent)
