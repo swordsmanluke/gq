@@ -65,6 +65,8 @@ module Gq
     end
 
     def stack_for(branch)
+      puts "BRANCH: #{branch}"
+      puts "STACK: #{branches[branch]}"
       stk = [branch]
       branch = branches[branch]
       while branch.parent != ''
