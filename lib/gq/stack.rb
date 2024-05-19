@@ -11,13 +11,15 @@ module Gq
     attr_reader :branches
 
     COMMANDS = [
-      Init,
-      Up, Down,
-      Log,
       AddBranch,
       Commit,
+      Down,
+      Init,
+      Log,
       Restack,
-      Submit
+      Sync,
+      Submit,
+      Up,
     ]
 
     def initialize(branches={}, git: ::Gq::Git)
@@ -55,8 +57,23 @@ module Gq
     end
 
     def current_branch
-      puts "Current branch Git: #{@git.current_branch.name}(#{@git.current_branch.sha[0..6]})"
-      branches[@git.current_branch.name].tap { |b| puts "Current branch: #{b&.name} (#{branches.keys.join(', ')})" }
+      branches[@git.current_branch.name]
+    end
+
+    def current_stack
+      stack_for(current_branch.name)
+    end
+
+    def stack_for(branch)
+      puts "BRANCH: #{branch}"
+      puts "PARENT: #{branches[branch]&.parent}"
+      stk = [branch]
+      branch = branches[branch]
+      while branch.parent != ''
+        stk << branch.parent
+        branch = branches[branch.parent]
+      end
+      stk
     end
 
     def add_branch(branch, parent = nil)
@@ -137,9 +154,8 @@ module Gq
         git = ::Gq::Git
 
         toml_data.each do |bn, attrs|
-          if git.branches.map(&:name).include? bn
-            branches[bn] = Node.new(bn, attrs['head'], parent: attrs['parent'])
-          else
+          branches[bn] = Node.new(bn, attrs['head'], parent: attrs['parent'])
+          unless git.branches.map(&:name).include? bn
             puts "#{bn} is missing. Did you manually delete it?"
           end
         end

@@ -8,6 +8,23 @@ module Gq
         `git rev-parse --is-inside-work-tree`.strip == 'true'
       end
 
+      def pull(remote: nil, remote_branch: nil)
+        self_destruct("Not in a git repository") unless in_git_repo
+        if remote && remote_branch
+          cmd = "git pull #{remote} #{remote_branch}"
+        else
+          cmd = "git pull"
+        end
+
+        bash(cmd, or_fn: -> (res) { self_destruct res.output })
+      end
+
+      def fetch(remote=nil)
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        bash("git fetch #{remote} -p", or_fn: -> (res) { self_destruct res.output })
+      end
+
       def checkout(branch_name)
         self_destruct("Not in a git repository") unless in_git_repo
 
@@ -27,7 +44,7 @@ module Gq
 
       def commit_diff(branch1, branch2)
         self_destruct("Not in a git repository") unless in_git_repo
-        return "" if branch2.nil?
+        return [] if branch2.nil?
 
         bash("git log #{branch2}..#{branch1} --format=oneline")
           .output
@@ -56,10 +73,13 @@ module Gq
         parents[branch_name]
       end
 
-      def branches
+      def branches(type=:local)
         self_destruct("Not in a git repository") unless in_git_repo
 
-        bash("git branch --format='%(refname:short) %(objectname:short)'")
+        cmd = "git branch --format='%(refname:short) %(objectname:short)'"
+        cmd += " -r" if type == :remote
+
+        bash(cmd)
           .stdout
           .split("\n")
           .map { |name_and_hash| Branch.new(*name_and_hash.split(" ")) }
@@ -87,17 +107,45 @@ module Gq
         bash("git remote").stdout.split("\n")
       end
 
+      def remote_url(remote)
+        bash("git remote get-url #{remote}").stdout
+      end
+
+      def push(branch, remote: nil)
+        self_destruct("Not in a git repository") unless in_git_repo
+
+        og_branch = current_branch.name
+        checkout(branch)
+        bash("git push #{remote} #{branch}")
+          .tap { checkout og_branch }  # Restore the original branch after attempting the push, either success or failure
+          .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
+      end
+
       def parents
+        parent_regex = /(.*\s+[a-f0-9]+)(\s+\[(.*)\])?\s+(.*)/
         bash("git branch -vv")
           .stdout
           .chomp
           .split("\n")
-          .map { |line| line.split(' ') }
-          .compact
-          .map { |name, *rest| name != '*' ? [name, *rest] : rest }
-          .map { |name, _, parent| [name, parent[1...-1]] }
+          .map { |line| parent_regex.match(line) }
+          .map { |match| [match[1].split(' ').reject{_1==?*}.first, match[3]] }
+          .map { |name, parent| [name, extract_parent(parent)] }
           .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
           .to_h
+      end
+
+      def commits(branch=current_branch.name, count=10)
+        bash("git log -#{count} #{branch}")
+          .stdout
+          .split(/^commit [a-f0-9]+$/)
+          .reject { _1.empty? }
+      end
+
+      private
+
+      def extract_parent(parent)
+        return "" if parent.nil? or parent.empty?
+        parent.split(":").first
       end
     end
 
@@ -112,7 +160,21 @@ module Gq
 
     def self.delete_branch(branch)
       self_destruct("Not in a git repository") unless in_git_repo
-      bash("git branch -D #{branch}")
+      bash("git branch -d #{branch}")
+    end
+
+    def self.track(child, parent)
+      self_destruct("Not in a git repository") unless in_git_repo
+      og_branch = if current_branch != child
+                    current_branch
+                    checkout(child)
+                  else
+                    nil
+                  end
+
+      bash("git branch --set-upstream-to=#{parent}")
+        .tap { checkout(og_branch) if og_branch }
+        .tap { self_destruct("Failed to track branch: #{red(child)}") if _1.failure? }
     end
   end
 

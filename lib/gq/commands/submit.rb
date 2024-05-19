@@ -1,32 +1,59 @@
 # frozen_string_literal: true
 require_relative '../shell'
+require_relative '../code_review/github_reviewer'
 require_relative 'command'
 
 module Gq
-class Submit < Command
-  COMMAND = ["submit"]
+  class Submit < Command
+    COMMAND = ["submit"]
 
-  def self.documentation
-    "Submit code for review"
-  end
+    def initialize(stack, git=Git, code_review_client=CodeReview::GithubReviewer.new)
+      super(stack, git)
+      @cr_client = code_review_client
+    end
 
-  def call(*args)
-    # Use the origin and push each branch to it
-    origin = case @git.remotes.size
-             when 1
-               @git.remotes.first
-             when 0
-               self_destruct "No remotes found! Use #{green("gq squish")} instead"
-             else
-                Shell.prompt("Multiple remotes found - which remote should we use?", options: @git.remotes)
-             end
+    def self.documentation
+      "Submit code for review"
+    end
 
-    @git.fetch
-    @stack.current_stack.each do |branch_name|
-      @git.checkout(branch_name)
-      @git.push(branch_name, remote: origin)
-      # TODO: Create PR based on remote API
+    def call(*args)
+      # Use the origin and push each branch to it
+      origin = case @git.remotes.size
+               when 1
+                 @git.remotes.first
+               when 0
+                 self_destruct "No remotes found! Use #{green("gq squish")} instead"
+               else
+                 Shell.prompt("Multiple remotes found - which remote should we use?", options: @git.remotes)
+               end
+
+      @git.fetch
+      @stack.current_stack.reverse.each do |branch_name|
+        @git.push(branch_name, remote: origin)
+        # TODO: Create (or update) code review request based on remote API
+        # against the remote parent - assuming it exists, otherwise we err
+        parent = @git.parent_of(branch_name)
+        next if parent == '' # We may be updating the root branch, which has no parent
+        update_code_review(branch_name, parent)
+      end
+    end
+
+    def update_code_review(branch_name, parent)
+      if @cr_client.review_exists?(branch_name, parent)
+        puts "Updating code review for #{branch_name.cyan}"
+        pr = @cr_client.update_review(branch_name, parent)
+        puts "#{yellow("Updated")} Review at: #{pr.html_url.cyan}"
+      else
+        if Shell.prompt?("Create a new review for #{branch_name.cyan}?")
+          puts yellow("Creating code review") + " for #{branch_name.cyan}"
+          puts tree(@git.commits(branch_name).first.split("\n")[4..].join("\n").grey, 1)
+
+          pr = @cr_client.create_review(branch_name, parent)
+          puts "#{green("New")} Review at: #{pr.html_url.cyan}"
+        else
+          puts "No PR created"
+        end
+      end
     end
   end
-end
 end

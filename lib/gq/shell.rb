@@ -1,5 +1,5 @@
 # Shell functions for ruby
-require 'open3'
+require "open3"
 
 def self_destruct(msg)
   puts msg
@@ -22,6 +22,18 @@ def cyan(string)
   string.cyan
 end
 
+def grey(string)
+  string.grey
+end
+
+def tree(string, depth, fill = "  ")
+  indent(string, fill * depth)
+end
+
+def indent(string, fill = "  ")
+  string.split("\n").map { fill + _1 }.join("\n")
+end
+
 class String
   def red
     "\e[31m#{self}\e[0m"
@@ -35,8 +47,16 @@ class String
     "\e[33m#{self}\e[0m"
   end
 
+  def bright_yellow
+    "\e[33;1m#{self}\e[0m"
+  end
+
   def cyan
     "\e[36m#{self}\e[0m"
+  end
+
+  def grey
+    "\e[90m#{self}\e[0m"
   end
 end
 
@@ -47,11 +67,11 @@ module Gq
       args = []
       mode = if options
                args << options.join(" ")
-               'choose'
+               "choose"
              elsif flags.include?(:multiline)
-               'write'
+               "write"
              else
-               'input'
+               "input"
              end
 
       args << "--placeholder '#{placeholder}'" if placeholder
@@ -61,6 +81,10 @@ module Gq
 
       puts message
       `#{cmd}`.chomp
+    end
+
+    def self.prompt?(message, *flags, options: ['y', 'n'], selected: 'y')
+      Shell.prompt(message, *flags, options: options) == selected
     end
   end
 
