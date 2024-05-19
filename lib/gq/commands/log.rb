@@ -17,7 +17,7 @@ module Gq
         formatted_name = i.zero? ? " o #{cur_branch}".yellow : " o #{cur_branch}".green
 
         puts tree(formatted_name, 0)
-        if cur_branch != 'master'
+        if cur_branch != 'master' && @git.branches.map(&:name).include?(cur_branch) && @git.branches.map(&:name).include?(parent_branch)
           formatted_diff(cur_branch, parent_branch, 5).tap do |diff|
             puts tree(diff, 1, " | ".green) unless diff.empty?
           end

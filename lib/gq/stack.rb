@@ -66,7 +66,7 @@ module Gq
 
     def stack_for(branch)
       puts "BRANCH: #{branch}"
-      puts "STACK: #{branches[branch]}"
+      puts "PARENT: #{branches[branch]&.parent}"
       stk = [branch]
       branch = branches[branch]
       while branch.parent != ''
@@ -154,9 +154,8 @@ module Gq
         git = ::Gq::Git
 
         toml_data.each do |bn, attrs|
-          if git.branches.map(&:name).include? bn
-            branches[bn] = Node.new(bn, attrs['head'], parent: attrs['parent'])
-          else
+          branches[bn] = Node.new(bn, attrs['head'], parent: attrs['parent'])
+          unless git.branches.map(&:name).include? bn
             puts "#{bn} is missing. Did you manually delete it?"
           end
         end
