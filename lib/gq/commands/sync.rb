@@ -34,7 +34,11 @@ class Sync < Command
           @git.delete_branch(branch)
         end
       else
-        @git.pull(remote: @git.remotes.first, remote_branch: branch)
+        if remote_branches.include?(branch)
+          @git.pull(remote: @git.remotes.first, remote_branch: branch)
+        else
+          puts "No remote branch for #{branch.cyan}"
+        end
       end
 
       parent = @git.parent_of(branch)
