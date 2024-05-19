@@ -11,8 +11,9 @@ class Sync < Command
   end
 
   def call(*args)
-    puts "Fetching from remote #{@git.remotes.first.cyan}..."
-    @git.fetch
+    remote = args.first || @git.remotes.first
+    puts "Fetching from remote #{remote.cyan}..."
+    @git.fetch(remote)
 
     @stack.current_stack.reverse.each do |branch|
       puts "Rebasing #{branch.cyan}..."
