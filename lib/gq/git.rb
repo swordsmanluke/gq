@@ -19,10 +19,10 @@ module Gq
         bash(cmd, or_fn: -> (res) { self_destruct res.output })
       end
 
-      def fetch
+      def fetch(remote)
         self_destruct("Not in a git repository") unless in_git_repo
 
-        bash("git fetch", or_fn: -> (res) { self_destruct res.output })
+        bash("git fetch #{remote} -p", or_fn: -> (res) { self_destruct res.output })
       end
 
       def checkout(branch_name)
