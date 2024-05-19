@@ -33,6 +33,8 @@ class Sync < Command
           @git.checkout('master')
           @git.delete_branch(branch)
         end
+
+        next
       else
         if remote_branches.include?(branch)
           @git.pull(remote: @git.remotes.first, remote_branch: branch)
