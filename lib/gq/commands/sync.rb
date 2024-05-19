@@ -47,7 +47,7 @@ class Sync < Command
       @git.rebase(branch, parent)
     end
 
-    @stack.refresh
+    ::Gq::Stack.refresh
   end
 end
 end
