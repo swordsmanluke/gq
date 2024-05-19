@@ -29,7 +29,7 @@ class Sync < Command
           end
           puts indent("Deleting #{branch.cyan}".red)
           @git.checkout('master')
-          @git.branch("-D", branch)
+          @git.delete_branch(branch)
         end
 
         next
