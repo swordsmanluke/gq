@@ -1,125 +1,154 @@
 # frozen_string_literal: true
-require_relative 'git'
 require 'toml'
+require_relative 'node'
+require_relative 'shell'
+
+# Require all commands
+Dir.glob(File.dirname(__FILE__) + '/commands/*.rb').each { |f| require f }
 
 module Gq
-  StackNode = Struct.new(:name, :head, :parent, :children) do
-    def initialize(branch_name, head, parent = nil, children = [])
-      super(branch_name, head, parent, children)
-    end
-
-    def add_child(child)
-      if child.parent == name
-        children << child
-        true
-      else
-        children.any? { |c| c.add_child(child) }
-      end
-    end
-
-    def to_toml
-      "[#{name}]\nhead = \"#{head}\"\nparent = \"#{parent}\""
-    end
-  end
-
   class Stack
-    attr_reader :git, :branches
+    attr_reader :branches
 
-    def initialize(git_client = ::Gq::Git)
-      @git = git_client
-      @branches = {}
+    COMMANDS = [
+      Init,
+      Up, Down,
+      Log,
+      AddBranch,
+      Commit,
+      Restack,
+      Submit
+    ]
+
+    def initialize(branches={}, git: ::Gq::Git)
+      @branches = branches
+      @git = git
     end
 
-    def config_file_path
-      "#{git.root_dir}/.gq/stack.toml"
+    def self.from_config
+      puts "Reloading from local config..."
+      new(StackFile.load_config_file)
     end
 
-    def exists?
-      File.exist? config_file_path
-    end
-
-    def stack
-      node = branches[git.current_branch.name]
-      [[node.name, git.commit_diff(node.name, node.parent)]].tap do |stk|
-        while(node = branches[node.parent])
-          stk << [node.name, git.commit_diff(node.name, node.parent)]
-        end
+    def self.refresh(git=::Gq::Git)
+      puts "Reloading from local git..."
+      # Read branches from git and rebuild the commands, based on the current branches
+      branches = {}
+      git.branches.each do |branch|
+        branches[branch.name] = ::Gq::Node.new(branch.name, branch.sha, parent: git.parent_of(branch.name))
       end
+      branches = link_parents(branches)
+
+      StackFile.save(branches)
+
+      new(branches)
     end
 
-    def load_file
-      self_destruct "1. No stack config found - have you run `gq init`?" unless exists?
-      load_toml(File.read(config_file_path))
+    def root
+      branch = current_branch
+      puts "BRANCH: #{branch&.name}"
+      while branch.parent != ''
+        branch = branches[branch.parent]
+        puts "BRANCH: #{branch&.name}"
+      end
+      branch
     end
 
-    def load_toml(stack_str)
-      toml_data = TOML::Parser.new(stack_str).parsed
-      create_branches(toml_data)
-      link_parents
-    end
-
-    def initialize_stack
-      self_destruct "Already initialized" if exists?
-
-      add_branch(git.current_branch)
-      git.ignore('.gq/stack.toml')
+    def current_branch
+      puts "Current branch Git: #{@git.current_branch.name}(#{@git.current_branch.sha[0..6]})"
+      branches[@git.current_branch.name].tap { |b| puts "Current branch: #{b&.name} (#{branches.keys.join(', ')})" }
     end
 
     def add_branch(branch, parent = nil)
       self_destruct "Branch already exists: #{branch.name}" if @branches.key?(branch.name)
-
-      @branches[branch.name] = StackNode.new(branch.name, branch.sha, parent&.name)
-      save!
-    end
-
-    def create_branch(new_branch)
-      parent = git.current_branch
-      new_br = git.new_branch(new_branch)
-      add_branch(new_br, parent)
-    end
-
-    def up
-      # Move away from the root, from the current node to a child
-      git.checkout(@branches[git.current_branch.name].children.first.name)
-    end
-
-    def down
-      git.checkout(@branches[git.current_branch.name].parent)
-    end
-
-    def save!
-      nodes = @branches.values
-      Dir.mkdir(File.dirname(config_file_path)) unless Dir.exist? File.dirname(config_file_path)
-      File.open(config_file_path, "w") do |f|
-        while nodes.any?
-          node = nodes.shift
-          f.write(node.to_toml)
-          f.write("\n\n")
-        end
-      end
+      @branches[branch.name] = Node.new(branch.name, branch.sha, parent: parent&.name)
+      StackFile.save(@branches)
+      @branches[branch.name]
     end
 
     private
-
-    def link_parents
-      @branches.values.each do |branch|
-        next if branch.parent.nil? || branch.parent.empty?
-        # TODO: If a parent branch is missing... what do?
-        @branches[branch.parent].add_child(branch)
+    def method_missing(name, *args)
+      COMMANDS.each do |cmd|
+        return cmd.new(self).call(*args) if cmd::COMMAND.include? name.to_s
       end
+
+      super
     end
 
-    def create_branches(toml_data)
-      toml_data.each do |bn, attrs|
-        if git.branches.include? bn
-          @branches[bn] = StackNode.new(bn, attrs['head'], attrs['parent'])
-        else
-          puts "#{bn} is missing. Did you manually delete it?"
+    def respond_to_missing?(name, include_private = false)
+      COMMANDS.any? { |cmd| cmd::COMMAND.include? name.to_s } || super
+    end
+
+    private
+    def self.link_parents(branches)
+      puts"linking parents...(1)"
+      branches.values.each do |branch|
+        next if branch.parent.nil? || branch.parent.empty?
+        branches[branch.parent].children << branch.name
+      end
+
+      puts "Parents to children: #{branches.values.map { |b| [b.name, b.children] }.to_h}"
+
+      branches
+    end
+
+  end
+
+  class StackFile
+    class << self
+
+      def config_file_path
+        git = ::Gq::Git
+        "#{git.root_dir}/.gq/stack.toml"
+      end
+
+      def exists?
+        File.exist? config_file_path
+      end
+
+      def load_config_file
+        self_destruct "1. No commands config found - have you run `gq init`?" unless exists?
+        load_toml(File.read(config_file_path))
+      end
+
+      def load_toml(stack_str)
+        toml_data = TOML::Parser.new(stack_str).parsed
+        load_stack_nodes(toml_data)
+      end
+
+      def save(branches)
+        nodes = branches.values
+
+        Dir.mkdir(File.dirname(config_file_path)) unless Dir.exist? File.dirname(config_file_path)
+
+        File.open(config_file_path, "w") do |f|
+          while nodes.any?
+            node = nodes.shift
+            f.write(node.to_toml)
+            f.write("\n\n")
+          end
         end
       end
 
-      @branches.values.each do |branch|
-        @branches[branch.parent]&.tap { |p| p.add_child(branch) }
+      private
+
+      def load_stack_nodes(toml_data)
+        branches = {}
+        git = ::Gq::Git
+
+        toml_data.each do |bn, attrs|
+          if git.branches.map(&:name).include? bn
+            branches[bn] = Node.new(bn, attrs['head'], parent: attrs['parent'])
+          else
+            puts "#{bn} is missing. Did you manually delete it?"
+          end
+        end
+
+        branches.values.each do |branch|
+          branches[branch.parent]&.tap { |p| p.children << branch.name }
+        end
+
+        branches
       end
     end
   end

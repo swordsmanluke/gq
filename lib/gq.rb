@@ -3,6 +3,7 @@
 require_relative "gq/version"
 require_relative 'gq/shell'
 require_relative 'gq/stack'
+require_relative 'gq/git'
 
 module Gq
   USAGE = """
@@ -10,27 +11,6 @@ Usage:
    gq <git command> | <gq command>
 
    gq commands:
-     create <bn>: creates and switches to a new branch named <bn>
-
-     up:     move away from the root
-
-     down:   move toward the root
-
-     sync:   pull root, then restack everything on the current stack
-
-     move:   change the parent of the current branch and rebase this branch and its descendents
-
-     squash: move the current branch's commits to its parent and delete this branch
-
-  These override existing git commands:
-     commit:                   create a new git commit
-
-     checkout [bn]:            check out a branch - if no branch name provided, provides a UI for the checkout
-
-     push [branch|down|stack]: push selected branch(es) to the repo. Defaults to `stack`
-       * branch: Push just the current branch to `origin`
-       * down:   Push the current branch and all modifications below it
-       * stack:  Push the entirety of the current stack, including up-stack changes
 """
 
   class Gq
@@ -39,7 +19,7 @@ Usage:
     def initialize
       @git = ::Gq::Git
       @stack = ::Gq::Stack.new(git)
-      @stack.load_file if @stack.exists?
+      @stack = ::Gq::Stack.from_config if ::Gq::StackFile.exists?
     end
 
     def run
@@ -47,32 +27,20 @@ Usage:
       self_destruct USAGE if ARGV.size < 1
 
       cmd = ARGV.shift
-      self_destruct 'gq has not been initialized - please run gq init' unless stack.exists? or cmd == "init"
+      self_destruct 'gq has not been initialized - please run gq init' unless ::Gq::StackFile.exists? or cmd == "init"
 
-      case cmd
-      when "init"
-        stack.initialize_stack
-      when "cc" # Commit
-        self_destruct "Not implemented yet!"
-      when "bc" # Create branch
-        stack.create_branch(ARGV.shift)
-      when "log"
-        stack.stack.each do |(bn, diff)|
-          puts "#{bn}:\n#{diff}"
-        end
-      when "up"
-        stack.up
-      when "down"
-        stack.down
-      when "sync"
-        self_destruct "Not implemented yet!"
-      when "move"
-        self_destruct "Not implemented yet!"
+      lj = ::Gq::Stack::COMMANDS.map { |cmd| cmd::COMMAND.join(", ").length }.max + 5
+
+      commands = ::Gq::Stack::COMMANDS
+                .map { |cmd| "      #{(cmd::COMMAND.join(", ")+":").ljust(lj)}#{cmd.documentation}" }
+                .join("\n")
+
+      if stack.respond_to?(cmd)
+        stack.send(cmd, *ARGV)
       else
-        puts "unknown command #{cmd}"
+        self_destruct "unknown command #{cmd}\n#{USAGE}#{commands}"
       end
     end
-
   end
 end
 

@@ -7,18 +7,63 @@ def self_destruct(msg)
 end
 
 def red(string)
-  "\e[31m#{string}\e[0m"
+  string.red
 end
 
 def green(string)
-  "\e[32m#{string}\e[0m"
+  string.green
 end
 
 def yellow(string)
-  "\e[33m#{string}\e[0m"
+  string.yellow
+end
+
+def cyan(string)
+  string.cyan
+end
+
+class String
+  def red
+    "\e[31m#{self}\e[0m"
+  end
+
+  def green
+    "\e[32m#{self}\e[0m"
+  end
+
+  def yellow
+    "\e[33m#{self}\e[0m"
+  end
+
+  def cyan
+    "\e[36m#{self}\e[0m"
+  end
 end
 
 module Gq
+  class Shell
+    # Helper methods for working with the shell
+    def self.prompt(message, *flags, options: nil, placeholder: nil)
+      args = []
+      mode = if options
+               args << options.join(" ")
+               'choose'
+             elsif flags.include?(:multiline)
+               'write'
+             else
+               'input'
+             end
+
+      args << "--placeholder '#{placeholder}'" if placeholder
+
+      cmd = "gum #{mode} #{args.join ' '}".chomp
+      puts "> #{cmd}"
+
+      puts message
+      `#{cmd}`.chomp
+    end
+  end
+
   class ShellResult
     attr_reader :stdout, :stderr, :exit_code
 
@@ -42,6 +87,15 @@ module Gq
   end
 end
 
-def bash(command)
-  Gq::ShellResult.new(*Open3.capture3(command))
+def bash(command, do_fn: ->(_) {}, or_fn: ->(_) {})
+  Gq::ShellResult.new(*Open3.capture3(command)).tap do|res|
+    if res.success?
+      do_fn.call(res)
+    else
+      or_fn.call(res)
+    end
+  end
+
+
 end
+
