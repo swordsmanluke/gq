@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "toml"
   spec.add_dependency "optparse"
   spec.add_dependency "octokit"
+  spec.add_dependency "faraday-retry" # Shuts up a warning
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
