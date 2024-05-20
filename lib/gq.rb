@@ -43,5 +43,3 @@ Usage:
     end
   end
 end
-
-Gq::Gq.new.run

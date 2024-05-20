@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
 
-require "gq"
+require_relative "../lib/gq"
+
+Gq::Gq.new.run
