@@ -2,11 +2,10 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
 class Restack < Command
   COMMAND = ["restack"]
 
-  def initialize(stack, git=::Gq::Git)
+  def initialize(stack, git=Git)
     super(stack, git)
     @queue = []
   end
@@ -41,5 +40,4 @@ class Restack < Command
 
     @queue.shift
   end
-end
 end

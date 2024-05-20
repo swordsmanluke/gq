@@ -3,14 +3,14 @@ require_relative './code_reviewer'
 require_relative '../shell'
 require 'octokit'
 
-class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
+class GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def initialize
     super
     token = ENV['GITHUB_TOKEN']
     self_destruct "GITHUB_TOKEN environment variable not set" if token.nil?
     @client = Octokit::Client.new(access_token: token)
-    @git = ::Gq::Git
+    @git = Git
     repo_name = @git.remotes
                     .map { @git.remote_url(_1)
                                .split(?:)
@@ -47,7 +47,7 @@ class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
     title ||= message.split("\n").shift
     body ||= message.split("\n")[1..].join("\n")
 
-    @client.create_pull_request(
+    to_gq_review @client.create_pull_request(
       @repo,
       parent,
       branch_name,
@@ -57,7 +57,11 @@ class Gq::CodeReview::GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def update_review(branch_name, base = nil)
     # No action needed here - pushing is all that's required. Just return the pr
-    reviews(branch_name, base).first
+    to_gq_review reviews(branch_name, base).first
+  end
+
+  def to_gq_review(pr)
+    Review.new(pr.id, pr.html_url)
   end
 
   def merge_review(branch_name, base = nil)

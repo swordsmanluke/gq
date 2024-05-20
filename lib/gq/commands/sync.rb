@@ -2,7 +2,6 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
 class Sync < Command
   COMMAND = ["sync"]
 
@@ -11,17 +10,24 @@ class Sync < Command
   end
 
   def call(*args)
-    remote = args.first || @git.remotes.first
+    remote = @stack.config.remote
+    if remote.nil?
+      if @git.remotes.size == 1
+        remote = @git.remotes.first
+      elsif @git.remotes.size > 1
+        remote = Shell.prompt("Remote to sync with: ", options: @git.remotes)
+      else
+        self_destruct "No remotes found. Please add a remote."
+      end
+    end
     puts "Fetching from remote #{remote.cyan}..."
     remote_branches = @git.branches(:remote).map(&:name)
     @git.fetch(remote)
     deleted_branches = remote_branches - @git.branches(:remote).map(&:name)
 
-    @stack.current_stack.reverse.each do |branch|
-      puts "Rebasing #{branch.cyan}..."
-
+    @stack.current_stack.each do |branch|
       if deleted_branches.include?("#{@git.remotes.first}/#{branch}")
-        if Shell.prompt?("Remote branch #{branch.cyan} does not exist. Delete?")
+        if Shell.prompt?("Remote branch #{branch.cyan} was deleted. Delete the local branch?")
           puts "Deleting #{branch.cyan}..."
           parent = @git.parent_of(branch)
           @stack.branches[branch].children.each do |child|
@@ -36,20 +42,20 @@ class Sync < Command
 
         next
       else
-        if remote_branches.include?(branch)
-          @git.pull(remote: @git.remotes.first, remote_branch: branch)
+        if remote_branches.include?("#{remote}/#{branch}")
+          @git.pull(remote: @stack.config.remote, remote_branch: branch)
         else
           puts "No remote branch for #{branch.cyan}"
         end
       end
 
       parent = @git.parent_of(branch)
-      next if parent == '' # We may be updating the root branch, which has no parent
+      next if parent == '' or parent.nil? # We may be updating the root branch, which has no parent
 
+      puts "Rebasing #{branch.cyan} on #{parent.cyan}"
       @git.rebase(branch, parent)
     end
 
-    ::Gq::Stack.refresh
+    @stack.refresh
   end
-end
 end

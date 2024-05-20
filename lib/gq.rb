@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "gq/version"
-require_relative 'gq/shell'
-require_relative 'gq/stack'
-require_relative 'gq/git'
+Dir.entries(File.join(File.dirname(__FILE__), 'gq')).each do |file|
+  if file.end_with?('.rb')
+    require_relative "gq/#{file}"
+  end
+end
 
 module Gq
   USAGE = """
@@ -12,14 +13,18 @@ Usage:
 
    gq commands:
 """
-
+  VERSION = "0.1.0"
   class Gq
     attr_reader :git, :stack
 
     def initialize
-      @git = ::Gq::Git
-      @stack = ::Gq::Stack.new(git)
-      @stack = ::Gq::Stack.from_config if ::Gq::StackFile.exists?
+      @git = Git
+      stack_config = if ::StackFile.exists?
+                       ::StackConfig.from_toml_file(::StackFile.config_file_path)
+                     else
+                        ::StackConfig.from_git
+                     end
+      @stack = Stack.new(stack_config)
     end
 
     def run
@@ -27,11 +32,11 @@ Usage:
       self_destruct USAGE if ARGV.size < 1
 
       cmd = ARGV.shift
-      self_destruct 'gq has not been initialized - please run gq init' unless ::Gq::StackFile.exists? or cmd == "init"
+      self_destruct 'gq has not been initialized - please run gq init' unless ::StackFile.exists? or cmd == "init"
 
-      lj = ::Gq::Stack::COMMANDS.map { |cmd| cmd::COMMAND.join(", ").length }.max + 5
+      lj = ::Stack::COMMANDS.map { |cmd| cmd::COMMAND.join(", ").length }.max + 5
 
-      commands = ::Gq::Stack::COMMANDS
+      commands = ::Stack::COMMANDS
                 .map { |cmd| "      #{(cmd::COMMAND.join(", ")+":").ljust(lj)}#{cmd.documentation}" }
                 .join("\n")
 

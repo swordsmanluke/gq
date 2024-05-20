@@ -60,66 +60,62 @@ class String
   end
 end
 
-module Gq
-  class Shell
-    # Helper methods for working with the shell
-    def self.prompt(message, *flags, options: nil, placeholder: nil)
-      args = []
-      mode = if options
-               args << options.join(" ")
-               "choose"
-             elsif flags.include?(:multiline)
-               "write"
-             else
-               "input"
-             end
+class Shell
+  # Helper methods for working with the shell
+  def self.prompt(message, *flags, options: nil, placeholder: nil, &block)
+    args = []
+    mode = if options
+             args << options.join(" ")
+             "choose"
+           elsif flags.include?(:multiline)
+             "write"
+           else
+             "input"
+           end
 
-      args << "--placeholder '#{placeholder}'" if placeholder
+    args << "--placeholder '#{placeholder}'" if placeholder
 
-      cmd = "gum #{mode} #{args.join ' '}".chomp
-      puts "> #{cmd}"
+    cmd = "gum #{mode} #{args.join ' '}".chomp
 
-      puts message
-      `#{cmd}`.chomp
-    end
-
-    def self.prompt?(message, *flags, options: ['y', 'n'], selected: 'y')
-      Shell.prompt(message, *flags, options: options) == selected
+    puts message
+    `#{cmd}`.chomp.tap do |val|
+      yield val if block_given?
     end
   end
 
-  class ShellResult
-    attr_reader :stdout, :stderr, :exit_code
+  def self.prompt?(message, *flags, options: ['y', 'n'], selected: 'y')
+    Shell.prompt(message, *flags, options: options) == selected
+  end
+end
 
-    def initialize(stdout, stderr, status)
-      @stdout = stdout
-      @stderr = stderr
-      @exit_code = status.exitstatus
-    end
+class ShellResult
+  attr_reader :stdout, :stderr, :exit_code
 
-    def success?
-      @exit_code.zero?
-    end
+  def initialize(stdout, stderr, status)
+    @stdout = stdout
+    @stderr = stderr
+    @exit_code = status.exitstatus
+  end
 
-    def failure?
-      !success?
-    end
+  def success?
+    @exit_code.zero?
+  end
 
-    def output
-      [@stdout, @stderr].join("\n")
-    end
+  def failure?
+    !success?
+  end
+
+  def output
+    [@stdout, @stderr].join("\n")
   end
 end
 
 def bash(command, do_fn: ->(_) {}, or_fn: ->(_) {})
-  Gq::ShellResult.new(*Open3.capture3(command)).tap do|res|
+  ShellResult.new(*Open3.capture3(command)).tap do|res|
     if res.success?
       do_fn.call(res)
     else
       or_fn.call(res)
     end
   end
-
-
 end
-

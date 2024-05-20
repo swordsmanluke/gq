@@ -1,19 +1,29 @@
-[master]
+code_review_tool = "none"
+remote = "origin"
+root_branch = "master"
+version = 1
+
+[[branches]]
+name = "master"
 head = "12345abc"
 parent = ""
 
-[branch1]
+[[branches]]
+name = "branch1"
 head = "12345bcd"
 parent = "master"
 
-[branch2]
+[[branches]]
+name = "branch2"
 head = "12345def"
 parent = "master"
 
-[branch1_1]
+[[branches]]
+name = "branch1_1"
 head = "12345efg"
 parent = "branch1"
 
-[branch1_2]
+[[branches]]
+name = "branch1_2"
 head = "12345hij"
 parent = "branch1_1"

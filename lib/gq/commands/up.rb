@@ -2,7 +2,6 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
 class Up < Command
   COMMAND = ["up", "bu"]
 
@@ -20,9 +19,8 @@ class Up < Command
     elsif current.children.size == 1
       @git.checkout(current.children.first)
     else
-      child = ::Gq::Shell.prompt("Multiple branches - choose one", options: current.children)
+      child = Shell.prompt("Multiple branches - choose one", options: current.children)
       @git.checkout(child) if child
     end
   end
-end
 end

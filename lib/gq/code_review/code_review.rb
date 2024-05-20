@@ -1,4 +1,7 @@
 # frozen_string_literal: true
 
-module Gq::CodeReview
+module Gq
+module CodeReview
+  Review = Struct.new(:id, :url)
+end
 end

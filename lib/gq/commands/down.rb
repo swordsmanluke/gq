@@ -2,7 +2,6 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
 class Down < Command
   COMMAND = ["down", "bd"]
 
@@ -20,5 +19,4 @@ class Down < Command
       @git.checkout(current.parent)
     end
   end
-end
 end

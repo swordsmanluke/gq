@@ -2,7 +2,6 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
 class Commit < Command
   COMMAND = ["commit", "cc"]
 
@@ -15,10 +14,9 @@ class Commit < Command
 
     unless args.include? '-m' or args.include? '--message' or args.include? '-am'
       args << '-m'
-      args << ::Gq::Shell.prompt("Commit message", :multiline, placeholder: "Enter your commit message, CTRL-D to finish.")
+      args << Shell.prompt("Commit message", :multiline, placeholder: "Enter your commit message, CTRL-D to finish.")
                           .then { |msg| "\"#{msg}\"" } # quote the message
     end
     @git.commit(args.join(' '))
   end
-end
 end

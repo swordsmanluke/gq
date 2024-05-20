@@ -2,7 +2,6 @@
 require_relative '../shell'
 require_relative 'command'
 
-module Gq
 class Squish < Command
   COMMAND = ["squish", "sq"]
 
@@ -29,5 +28,4 @@ class Squish < Command
     @git.delete_branch(me)
     @stack = Stack.refresh(@git)
   end
-end
 end
