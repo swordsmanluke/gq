@@ -26,40 +26,36 @@ class Sync < Command
     puts "Fetching from remote #{remote.cyan}..."
     remote_branches = @git.branches(:remote).map(&:name)
     @git.fetch(remote)
-    deleted_branches = remote_branches - @git.branches(:remote).map(&:name)
 
-    @git.branches(:local).map(&:name).each do |branch|
-      if deleted_branches.include?("#{@git.remotes.first}/#{branch}")
-        if Shell.prompt?("Remote branch #{branch.cyan} was deleted. Delete the local branch?")
-          puts "Deleting #{branch.cyan}..."
-          parent = @git.parent_of(branch)
-          @stack.branches[branch].children.each do |child|
-            puts indent("Setting parent of #{child.cyan} to #{parent.cyan}".green)
-            @stack.branches[child].parent = parent
-            @git.track(child, parent)
-          end
-          puts indent("Deleting #{branch.cyan}".red)
-          @git.checkout(@stack.root_branch)
-          @git.delete_branch(branch)
-        end
-
-        next
+    puts "Updating branch contents..."
+    results = pull_all.zip(@git.branches)
+    results.each do |result, branch|
+      if result.success?
+        puts "#{CHECKMARK} #{branch.cyan}"
       else
-        if remote_branches.include?("#{remote}/#{branch}")
-          @git.pull(remote: @stack.config.remote, remote_branch: branch)
-          puts "#{CHECKMARK} #{branch.cyan} (#{remote.cyan}/#{branch.cyan})"
-        else
-          puts "#{CHECKMARK} #{branch.cyan} #{"(not pushed)".yellow}"
-        end
+        puts "#{RED_X} #{branch.cyan}"
+        puts indent(result.output)
       end
-
-      parent = @git.parent_of(branch)
-      next if parent == '' or parent.nil? # We may be updating the root branch, which has no parent
-
-      puts "Rebasing #{branch.cyan} on #{parent.cyan}"
-      @git.rebase(branch, parent)
     end
 
-    @stack.refresh
+    pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
+
+    # Now restack all our branches
+    puts "Restacking Branches"
+    pulled_branches.each do |branch|
+      parent = @git.parent_of(branch)
+      @git.rebase(branch, parent)
+    end
+  end
+
+  def pull_all
+    remote_branches = @git.branches(:remote).map(&:name)
+    @git.branches(:local).map(&:name).each do |branch|
+      if remote_branches.include?("#{@git.remotes.first}/#{branch}")
+        @git.pull(remote: @stack.config.remote, remote_branch: branch)
+      else
+        @git.pull
+      end
+    end
   end
 end

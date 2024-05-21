@@ -187,7 +187,8 @@ class Git
 
   def self.rename_branch(old_name, new_name)
     self_destruct("Not in a git repository") unless in_git_repo
-    bash("git branch -m #{old_name} #{new_name}").tap { puts("Failed to rename branch: #{red(old_name)}\n#{_1.output}") if _1.failure? }
+    puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
+    bash("git branch -m #{old_name} #{new_name}").tap { puts(indent(_1.output)) }
   end
 
   def self.cherrypick(sha, branch=current_branch)
