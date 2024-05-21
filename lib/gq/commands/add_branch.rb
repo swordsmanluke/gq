@@ -15,7 +15,7 @@ class AddBranch < Command
     self_destruct "Branch already exists: #{branch_name}" if @stack.branches.key?(branch_name)
 
     parent = @stack.current_branch.name
-    new_branch = @git.new_branch(branch_name, tracking: parent)
-    @stack.add_branch(new_branch, @stack.branches[parent])
+    @git.new_branch(branch_name, tracking: parent)
+    @stack.refresh
   end
 end
