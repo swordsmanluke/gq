@@ -13,28 +13,29 @@ class Log < Command
   end
 
   def as_string
-    stack_id = 0
-    sorted_branches.map do |b|
-      "o #{b[:name]}".tap do |strbrn|
-        stack_id.times { |i| strbrn = indent(strbrn, b[:stacks].include?(i) ? ' | ' : '   ') }
-        stack_id += 1
-      end
+    out = []
+    sorted_branches.each do |b|
+      out << tree("o #{b[:name].cyan}", b[:stacks].max)
     end
+    out.join"\n"
   end
 
   def sorted_branches
+    max_depth = @stack.stacks.map(&:size).max
     @stack
       .stacks
       .map { |s| s.map { |b| { depth: s.index(b), name: b, stacks: [] } } }
       .each_with_index
       .reduce({}, &method(:track_stack_presence))
       .values
+      .sort_by{ [max_depth - _1[:depth], _1[:stacks].min] }
   end
 
   protected
 
   def track_stack_presence(all_branches, (stack, stack_id))
     stack.each do |branch|
+      puts "#{stack_id.to_s.green}: #{branch[:name].cyan}"
       all_branches[branch[:name]] = branch unless all_branches.key?(branch[:name])
       all_branches[branch[:name]][:stacks] << stack_id
       all_branches[branch[:name]][:stacks].uniq!  # Remove any dupes!

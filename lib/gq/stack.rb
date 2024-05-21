@@ -72,9 +72,8 @@ class Stack
 
   def stacks
     # Each unique path from root -> leaf is a stack.
-    stcks = []
-    dfs([], @config.root_branch, stcks)
-    stcks.sort_by(&:size).reverse
+    dfs([], @config.root_branch, [])
+      .sort_by { |path| puts path.join("->") + "#{path.count}"; path.count }
   end
 
   def to_s
@@ -99,6 +98,7 @@ class Stack
         dfs(path, child, stacks)
       end
     end
+    stacks
   end
 
   private
