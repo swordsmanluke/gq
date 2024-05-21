@@ -5,6 +5,9 @@ require_relative 'command'
 class Sync < Command
   COMMAND = ["sync"]
 
+  CHECKMARK = "\u2713".green
+  RED_X = "\u2717".red
+
   def self.documentation
     "Pull from remote, then restack."
   end
@@ -25,7 +28,7 @@ class Sync < Command
     @git.fetch(remote)
     deleted_branches = remote_branches - @git.branches(:remote).map(&:name)
 
-    @stack.current_stack.each do |branch|
+    @git.branches(:local).map(&:name).each do |branch|
       if deleted_branches.include?("#{@git.remotes.first}/#{branch}")
         if Shell.prompt?("Remote branch #{branch.cyan} was deleted. Delete the local branch?")
           puts "Deleting #{branch.cyan}..."
@@ -44,8 +47,9 @@ class Sync < Command
       else
         if remote_branches.include?("#{remote}/#{branch}")
           @git.pull(remote: @stack.config.remote, remote_branch: branch)
+          puts "#{CHECKMARK} #{branch.cyan} (#{remote.cyan}/#{branch.cyan})"
         else
-          puts "No remote branch for #{branch.cyan}"
+          puts "#{CHECKMARK} #{branch.cyan} #{"(not pushed)".yellow}"
         end
       end
 

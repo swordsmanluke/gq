@@ -114,9 +114,9 @@ class Git
       bash("git commit #{args}")
     end
     
-    def merge(upstream, branch=current_branch)
+    def merge(other_branch)
       self_destruct("Not in a git repository") unless in_git_repo
-      bash("git merge #{upstream} #{branch} --no-edit")
+      bash("git merge #{other_branch} --no-edit")
     end
 
     def remotes
@@ -171,10 +171,7 @@ class Git
     self_destruct("Not in a git repository") unless in_git_repo
 
     temp_branch(parent) do |target_branch|
-      # Try merging the branch into the target
-      res = merge(branch, target_branch)
-      # TODO: ensure cleanup?
-      self_destruct(res.output) if res.failure?
+      # Try cherrypicking the branch's commits into the target
       commit_diff(parent, branch)
         .map(&:first) # Just the shas
         .each do |sha|
@@ -183,8 +180,14 @@ class Git
       end
 
       # If we get this far, everything applied cleanly - rename the branches to make a swap
+      rename_branch(branch, "for-deletion-#{branch}")
       rename_branch(target_branch, branch)
     end
+  end
+
+  def self.rename_branch(old_name, new_name)
+    self_destruct("Not in a git repository") unless in_git_repo
+    bash("git branch -m #{old_name} #{new_name}").tap { puts("Failed to rename branch: #{red(old_name)}\n#{_1.output}") if _1.failure? }
   end
 
   def self.cherrypick(sha, branch=current_branch)
