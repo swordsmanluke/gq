@@ -51,11 +51,20 @@ class Sync < Command
   def pull_all
     remote_branches = @git.branches(:remote).map(&:name)
     @git.branches(:local).map(&:name).each do |branch|
-      if remote_branches.include?("#{@git.remotes.first}/#{branch}")
-        @git.pull(remote: @stack.config.remote, remote_branch: branch)
+      result = if remote_branches.include?("#{@git.remotes.first}/#{branch}")
+                 @git.pull(remote: @stack.config.remote, remote_branch: branch)
+               else
+                 @git.pull
+               end
+
+      if result.success?
+        puts "#{CHECKMARK} #{branch.cyan}"
       else
-        @git.pull
+        puts "#{RED_X} #{branch.cyan}"
+        puts indent(result.output)
       end
+
+      result
     end
   end
 end
