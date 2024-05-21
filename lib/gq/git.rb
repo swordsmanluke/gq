@@ -29,7 +29,7 @@ class Git
         "git pull"
             end
 
-      bash(cmd, or_fn: -> (res) { self_destruct res.output })
+      bash(cmd, or_fn: -> (res) { self_destruct "#{cmd}\n#{indent(res.output)}" })
     end
 
     def fetch(remote=nil)
