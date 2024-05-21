@@ -1,19 +1,33 @@
 # frozen_string_literal: true
-require_relative 'shell'
+require_relative "shell"
 
 class Git
   class << self
     def in_git_repo
-      `git rev-parse --is-inside-work-tree`.strip == 'true'
+      `git rev-parse --is-inside-work-tree`.strip == "true"
+    end
+    
+    def temp_branch
+      self_destruct("Not in a git repository") unless in_git_repo
+      raise "no block given to temp_branch" unless block_given?
+      
+      branchname = "temp-#{SecureRandom.hex(4)}"
+      begin
+        # Create the branch, but don't switch to it or nothin'
+        bash("git branch #{branchname}")
+        yield branchname
+      ensure
+        delete_branch(branchname)
+      end
     end
 
     def pull(remote: nil, remote_branch: nil)
       self_destruct("Not in a git repository") unless in_git_repo
-      if remote && remote_branch
-        cmd = "git pull #{remote} #{remote_branch}"
+      cmd = if remote && remote_branch
+        "git pull #{remote} #{remote_branch}"
       else
-        cmd = "git pull"
-      end
+        "git pull"
+            end
 
       bash(cmd, or_fn: -> (res) { self_destruct res.output })
     end
@@ -90,22 +104,28 @@ class Git
       args = ["-b #{branch_name}"]
       args << "--track #{tracking}" if tracking
 
-      bash("git checkout #{args.join(' ')}")
+      bash("git checkout #{args.join(" ")}")
         .tap { |res| self_destruct("Failed to create branch: #{red(branch_name)}\n#{res.output}") if res.failure? }
       current_branch
     end
 
     def commit(args)
       self_destruct("Not in a git repository") unless in_git_repo
-      cmd = ["git commit", args].join(' ')
-      `#{cmd}`
+      bash("git commit #{args}")
+    end
+    
+    def merge(upstream, branch=current_branch)
+      self_destruct("Not in a git repository") unless in_git_repo
+      bash("git merge #{upstream} #{branch} --no-edit")
     end
 
     def remotes
+      self_destruct("Not in a git repository") unless in_git_repo
       bash("git remote").stdout.split("\n")
     end
 
     def remote_url(remote)
+      self_destruct("Not in a git repository") unless in_git_repo
       bash("git remote get-url #{remote}").stdout
     end
 
@@ -126,7 +146,7 @@ class Git
         .chomp
         .split("\n")
         .map { |line| parent_regex.match(line) }
-        .map { |match| [match[1].split(' ').reject{_1==?*}.first, match[3]] }
+        .map { |match| [match[1].split(" ").reject{_1=="*"}.first, match[3]] }
         .map { |name, parent| [name, extract_parent(parent)] }
         .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
         .to_h
@@ -136,13 +156,13 @@ class Git
       bash("git log -#{count} #{branch}")
         .stdout
         .split(/^commit [a-f0-9]+$/)
-        .reject { _1.empty? }
+        .reject(&:empty?)
     end
 
     private
 
     def extract_parent(parent)
-      return "" if parent.nil? or parent.empty?
+      return "" if parent.nil? || parent.empty?
       parent.split(":").first
     end
   end
@@ -166,8 +186,6 @@ class Git
     og_branch = if current_branch != child
                   current_branch
                   checkout(child)
-                else
-                  nil
                 end
 
     bash("git branch --set-upstream-to=#{parent}")
@@ -180,6 +198,7 @@ class Branch
   attr_reader :name, :sha
 
   def initialize(name, sha)
-    @name = name; @sha = sha
+    @name = name
+ @sha = sha
   end
 end

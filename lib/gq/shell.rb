@@ -62,7 +62,7 @@ end
 
 class Shell
   # Helper methods for working with the shell
-  def self.prompt(message, *flags, options: nil, placeholder: nil, &block)
+  def self.prompt(message, *flags, options: nil, placeholder: nil)
     args = []
     mode = if options
              args << options.join(" ")
@@ -78,9 +78,9 @@ class Shell
     cmd = "gum #{mode} #{args.join ' '}".chomp
 
     puts message
-    `#{cmd}`.chomp.tap do |val|
-      yield val if block_given?
-    end
+    `#{cmd}`
+      .chomp
+      .tap { |val| yield val if block_given? }
   end
 
   def self.prompt?(message, *flags, options: ['y', 'n'], selected: 'y')
