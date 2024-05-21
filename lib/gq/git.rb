@@ -176,11 +176,13 @@ class Git
         .map(&:first) # Just the shas
         .each do |sha|
         res = cherrypick(sha, target_branch)
-        self_destruct(res.output) if res.failure?
+        return res if res.failure?
       end
 
       # If we get this far, everything applied cleanly - rename the branches to make a swap
-      rename_branch(branch, "for-deletion-#{branch}")
+      res = rename_branch(branch, "for-deletion-#{branch}")
+      return res if res.failure?
+
       rename_branch(target_branch, branch)
     end
   end

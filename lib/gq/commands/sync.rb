@@ -24,20 +24,10 @@ class Sync < Command
       end
     end
     puts "Fetching from remote #{remote.cyan}..."
-    remote_branches = @git.branches(:remote).map(&:name)
     @git.fetch(remote)
 
     puts "Updating branch contents..."
     results = pull_all.zip(@git.branches)
-    results.each do |result, branch|
-      if result.success?
-        puts "#{CHECKMARK} #{branch.cyan}"
-      else
-        puts "#{RED_X} #{branch.cyan}"
-        puts indent(result.output)
-      end
-    end
-
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
 
     # Now restack all our branches
