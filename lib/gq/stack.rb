@@ -74,21 +74,16 @@ class Stack
     # Each unique path from root -> leaf is a stack.
     stcks = []
     dfs([], @config.root_branch, stcks)
-    stcks.sort_by(&:size)
+    stcks.sort_by(&:size).reverse
   end
 
   def to_s
     branches = {}
-    width = stacks.size
     stacks.each_with_index do |stack, i|
       stack.each do |branch|
         next if branches.key? branch
         color = @git.current_branch == branch ? :cyan : :green
-        included_in_stacks = stacks.select { |stk| stk.include? branch }.count
-        indent_depth = width - i
-        indent_text = " | " * (included_in_stacks - 1) + " o "
-
-        branches[branch] = tree("#{indent_text}#{branch}".send(color), indent_depth, "   ")
+        branches[branch] = tree("#{indent_text}#{branch}".send(color), i, " | ".send(color))
 
       end
     end

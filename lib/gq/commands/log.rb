@@ -9,21 +9,37 @@ class Log < Command
   end
 
   def call(*_args)
-    puts @stack.to_s
+    puts as_string
   end
 
-  def old
-    current_stack.each_with_index do |cur_branch, i|
-      parent_branch = @stack.branches[cur_branch].parent
-      formatted_name = i.zero? ? " o #{cur_branch}".yellow : " o #{cur_branch}".green
-
-      puts tree(formatted_name, 0)
-      if cur_branch != 'master' && @git.branches.map(&:name).include?(cur_branch) && @git.branches.map(&:name).include?(parent_branch)
-        formatted_diff(cur_branch, parent_branch, 5).tap do |diff|
-          puts tree(diff, 1, " | ".green) unless diff.empty?
-        end
+  def as_string
+    stack_id = 0
+    sorted_branches.map do |b|
+      "o #{b[:name]}".tap do |strbrn|
+        stack_id.times { |i| strbrn = indent(strbrn, b[:stacks].include?(i) ? ' | ' : '   ') }
+        stack_id += 1
       end
     end
+  end
+
+  def sorted_branches
+    @stack
+      .stacks
+      .map { |s| s.map { |b| { depth: s.index(b), name: b, stacks: [] } } }
+      .each_with_index
+      .reduce({}, &method(:track_stack_presence))
+      .values
+  end
+
+  protected
+
+  def track_stack_presence(all_branches, (stack, stack_id))
+    stack.each do |branch|
+      all_branches[branch[:name]] = branch unless all_branches.key?(branch[:name])
+      all_branches[branch[:name]][:stacks] << stack_id
+      all_branches[branch[:name]][:stacks].uniq!  # Remove any dupes!
+    end
+    all_branches
   end
 
   private
