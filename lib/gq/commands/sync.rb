@@ -36,7 +36,7 @@ class Sync < Command
             @git.track(child, parent)
           end
           puts indent("Deleting #{branch.cyan}".red)
-          @git.checkout('master')
+          @git.checkout(@stack.root_branch)
           @git.delete_branch(branch)
         end
 

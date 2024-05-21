@@ -7,14 +7,14 @@ class Git
       `git rev-parse --is-inside-work-tree`.strip == "true"
     end
     
-    def temp_branch
+    def temp_branch(parent=current_branch)
       self_destruct("Not in a git repository") unless in_git_repo
       raise "no block given to temp_branch" unless block_given?
       
-      branchname = "temp-#{SecureRandom.hex(4)}"
+      branchname = "temp-#{parent}-#{SecureRandom.hex(4)}"
       begin
         # Create the branch, but don't switch to it or nothin'
-        bash("git branch #{branchname}")
+        bash("git branch -b #{branchname} -t #{parent}")
         yield branchname
       ensure
         delete_branch(branchname)
@@ -170,15 +170,32 @@ class Git
   def self.rebase(branch, parent)
     self_destruct("Not in a git repository") unless in_git_repo
 
-    bash("git checkout #{branch}",
-         or_fn: -> (res) { self_destruct "#{res.exit_code} Could not checkout #{branch} to rebase on #{parent}.\n#{res.output}" })
-    bash("git rebase #{parent}",
-         or_fn: -> (_) { self_destruct "Rebase #{branch} -> #{parent} failed. Run git mergetool then git rebase --continue" })
+    temp_branch(parent) do |target_branch|
+      # Try merging the branch into the target
+      res = merge(branch, target_branch)
+      # TODO: ensure cleanup?
+      self_destruct(res.output) if res.failure?
+      commit_diff(parent, branch)
+        .map(&:first) # Just the shas
+        .each do |sha|
+        res = cherrypick(sha, target_branch)
+        self_destruct(res.output) if res.failure?
+      end
+
+      # If we get this far, everything applied cleanly - rename the branches to make a swap
+      rename_branch(target_branch, branch)
+    end
+  end
+
+  def self.cherrypick(sha, branch=current_branch)
+    self_destruct("Not in a git repository") unless in_git_repo
+
+    bash("git cherry-pick #{sha} #{branch} --no-edit")
   end
 
   def self.delete_branch(branch)
     self_destruct("Not in a git repository") unless in_git_repo
-    bash("git branch -d #{branch}")
+    bash("git branch -d #{branch}") if branches.include? branch
   end
 
   def self.track(child, parent)
