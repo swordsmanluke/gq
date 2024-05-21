@@ -83,8 +83,7 @@ class Stack
       stack.each do |branch|
         next if branches.key? branch
         color = @git.current_branch == branch ? :cyan : :green
-        branches[branch] = tree("#{indent_text}#{branch}".send(color), i, " | ".send(color))
-
+        branches[branch] = tree("#{branch}".send(color), i, " | ".send(color))
       end
     end
 
