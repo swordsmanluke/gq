@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description = "GQ is a tool for managing stacked commits in Git. It provides a simple interface for managing a commands of commits, allowing you to easily reorder, squash, and edit commits before pushing them to a remote repository. Gq is designed to be fast, lightweight, and easy to use, making it a great tool for developers who want to keep their commit history clean and organized."
   spec.homepage = "http://perfectlunacy.com"
   spec.license = "GPLV2"
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.1.4"
 
   spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
 
