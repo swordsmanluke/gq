@@ -27,6 +27,7 @@ class Top < Command
           self_destruct("Top command cancelled.")
         end
       end
+      current = @stack.current_branch
     end
 
     puts `git status`
