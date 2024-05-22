@@ -72,6 +72,7 @@ class StackConfig
   private
 
   def link_parents
+    dirty = false
     branches.values.each do |branch|
       next if branch.parent.nil? || branch.parent.empty?
       parent = branches[branch.parent]
@@ -79,12 +80,13 @@ class StackConfig
         Shell.prompt "Parent Branch #{branch.parent.cyan} has been deleted - what should #{branch.name.cyan}'s new parent be?", options: @branches.keys do |new_parent|
           branch.parent = new_parent
           parent = branches[new_parent]
+          dirty = true
         end
       end
       parent.children << branch.name
     end
-
-    branches
+    StackFile.save(self) if dirty
+    nil
   end
 end
 
