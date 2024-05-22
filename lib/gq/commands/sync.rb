@@ -48,7 +48,7 @@ class Sync < Command
                  @git.pull
                else
                  # No remote branch or no parent, so nothing to pull
-                 ShellResult.new('', '', 0)
+                 ShellResult.new('', '', exit_code: 0)
                end
 
       if result.success?
