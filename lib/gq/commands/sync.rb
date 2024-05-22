@@ -28,6 +28,8 @@ class Sync < Command
 
     deleted_branches = @stack.branches.keys - @git.branches
     deleted_branches.each(&method(:forget_branch))
+    # Refresh the stack
+    @stack.refresh if deleted_branches.any?
 
     puts "Updating branch contents..."
     results = pull_all.zip(@git.branches)
@@ -73,10 +75,10 @@ class Sync < Command
   def forget_branch(branch)
     # This branch was removed from git, but still exists in our config - relink parents
     # Rebase any children
-    @stack.branches[branch].children.each { |child| @git.rebase(child, parent) }
-
-    # Refresh the stack
-    @stack.refresh
+    parent = @stack.branches[branch].parent
+    unless parent.nil? || parent.empty?
+      @stack.branches[branch].children.each { |child| @git.rebase(child, parent) }
+    end
   end
 
   def remove_branch(branch)
