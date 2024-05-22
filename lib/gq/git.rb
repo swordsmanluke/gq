@@ -44,7 +44,7 @@ class Git
       self_destruct("Not in a git repository") unless in_git_repo
 
       res = bash("git checkout #{branch_name}")
-      self_destruct("Failed to checkout branch: #{red(branch_name)}\n#{res.output}") if res.failure?
+      raise "Failed to checkout branch: #{red(branch_name)}\n#{res.output}" if res.failure?
       nil
     end
 
