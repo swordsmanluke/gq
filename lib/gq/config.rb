@@ -74,7 +74,7 @@ class StackConfig
   def link_parents
     branches.values.each do |branch|
       next if branch.parent.nil? || branch.parent.empty?
-      branches[branch.parent].add_child branch.name
+      branches[branch.parent].children << branch.name
     end
 
     branches
