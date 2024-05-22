@@ -12,6 +12,7 @@ class Stack
   COMMANDS = [
     AddBranch,
     Commit,
+    Config,
     Down,
     Init,
     Log,
@@ -53,7 +54,11 @@ class Stack
   end
 
   def current_branch
-    branches[@git.current_branch.name]
+    if branches.include? @git.current_branch.name
+      branches[@git.current_branch.name]
+    else
+      StackBranch.new(name: @git.current_branch.name, sha: @git.current_branch.sha, parent: @git.parent_of(@git.current_branch.name))
+    end
   end
 
   def current_stack
