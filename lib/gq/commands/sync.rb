@@ -25,11 +25,13 @@ class Sync < Command
         self_destruct "No remotes found. Please add a remote."
       end
     end
+
     puts "Fetching from remote #{remote.cyan}..."
     @git.fetch(remote)
 
     deleted_branches = @stack.branches.keys - @git.branches
     deleted_branches.each(&method(:forget_branch))
+
     # Refresh the stack
     @stack.refresh if deleted_branches.any?
 
@@ -52,10 +54,18 @@ class Sync < Command
     remote_branches = @git.branches(:remote).map(&:name)
     @git.branches(:local).map(&:name).map do |branch|
       @git.checkout(branch)
-      result = if remote_branches.include?("#{@git.remotes.first}/#{branch}")
+      result = if remote_branches.include?("#{@stack.config.remote}/#{branch}")
                  @git.pull(remote: @stack.config.remote, remote_branch: branch)
                elsif @git.parent_of(branch) != ''
-                 @git.pull
+                 if @git.parent_of(branch).start_with?(@stack.config.remote)
+                   if Shell.prompt? "#{RED_X} #{branch.cyan}'s remote branch has been deleted. Delete branch?"
+                     remove_branch(branch)
+                   else
+                     ShellResult.new('', '', exit_code: 0)
+                   end
+                 else
+                   @git.pull
+                 end
                else
                  # No remote branch or no parent, so nothing to pull
                  ShellResult.new('', '', exit_code: 0)
