@@ -75,9 +75,10 @@ class StackConfig
     branches.values.each do |branch|
       next if branch.parent.nil? || branch.parent.empty?
       parent = branches[branch.parent]
-      if parent.nil?
-        puts "Could not link parent #{branch.parent} to #{branch.name} - parent not found."
-        next
+      while parent.nil?
+        Shell.prompt "Parent Branch #{branch.parent.cyan} has been deleted - what should #{branch.name.cyan}'s new parent be?", options: @branches.keys do |new_parent|
+          parent = branches[new_parent]
+        end
       end
       parent.children << branch.name
     end
