@@ -74,7 +74,7 @@ class Sync < Command
   private
 
   def remove_branch(branch)
-    if Shell.prompt?("Remove merged branch #{branch.cyan}?\n\n#{indent(@git.commit_diff(@git.parent_of(branch), branch))}")
+    if Shell.prompt?("Remove merged branch #{branch.cyan}?\n\n#{indent(@git.commit_diff(@git.parent_of(branch), branch).join("\n"))}")
       parent = @git.parent_of(branch)
       # We can't remove the current branch, so checkout the parent if necessary
       @git.checkout(parent) if branch == @git.current_branch.name
