@@ -204,7 +204,7 @@ class Git
     puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
     current_branch do
       checkout(old_name)
-      return bash("git branch -m #{new_name}")
+      return bash("git branch -m #{new_name}", or_fn: ->{})
     end
   end
 
