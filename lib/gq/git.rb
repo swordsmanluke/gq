@@ -202,10 +202,8 @@ class Git
   def self.rename_branch(old_name, new_name)
     self_destruct("Not in a git repository") unless in_git_repo
     puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
-    current_branch do
-      checkout(old_name)
-      return bash("git branch -m #{new_name}")
-    end
+    checkout(old_name)
+    return bash("git branch -m #{new_name}")
   end
 
   def self.cherrypick(sha)
