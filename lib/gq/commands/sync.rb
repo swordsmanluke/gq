@@ -52,34 +52,44 @@ class Sync < Command
 
   def pull_all
     remote_branches = @git.branches(:remote).map(&:name)
-    @git.branches(:local).map(&:name).map do |branch|
-      @git.checkout(branch)
-      result = if remote_branches.include?("#{@stack.config.remote}/#{branch}")
-                 @git.pull(remote: @stack.config.remote, remote_branch: branch)
-               elsif @git.parent_of(branch) != ''
-                 if @git.parent_of(branch).start_with?(@stack.config.remote)
-                   if Shell.prompt? "#{RED_X} #{branch.cyan}'s remote branch has been deleted. Delete branch?"
-                     remove_branch(branch)
-                   else
-                     ShellResult.new('', '', exit_code: 0)
-                   end
+    to_sync = @git.roots.map { |root| branches[root] }.compact
+
+    until to_sync.empty?
+      branch = to_sync.shift
+      to_sync += branch.children.map { |child| branches[child] }
+      pull_branch(branch.name, remote_branches)
+    end
+  end
+
+  protected
+
+  def pull_branch(branch, remote_branches)
+    @git.checkout(branch)
+    result = if remote_branches.include?("#{@stack.config.remote}/#{branch}")
+               @git.pull(remote: @stack.config.remote, remote_branch: branch)
+             elsif @git.parent_of(branch) != ''
+               if @git.parent_of(branch).start_with?(@stack.config.remote)
+                 if Shell.prompt? "#{RED_X} #{branch.cyan}'s remote branch has been deleted. Delete branch?"
+                   remove_branch(branch)
                  else
-                   @git.pull
+                   ShellResult.new('', '', exit_code: 0)
                  end
                else
-                 # No remote branch or no parent, so nothing to pull
-                 ShellResult.new('', '', exit_code: 0)
+                 @git.pull
                end
+             else
+               # No remote branch or no parent, so nothing to pull
+               ShellResult.new('', '', exit_code: 0)
+             end
 
-      if result.success?
-        puts "#{CHECKMARK} #{branch.cyan}"
-      else
-        puts "#{RED_X} #{branch.cyan}"
-        puts indent(result.output)
-      end
-
-      result
+    if result.success?
+      puts "#{CHECKMARK} #{branch.cyan}"
+    else
+      puts "#{RED_X} #{branch.cyan}"
+      puts indent(result.output)
     end
+
+    result
   end
 
   private
