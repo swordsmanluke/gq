@@ -79,7 +79,7 @@ class Stack
   end
 
   def roots
-    branches.values.select { |b| b.parent.nil? || b.parent.empty? }.map(&:name)
+    branches.values.select { |b| b == @config.root_branch || b.parent.nil? || b.parent.empty? }.map(&:name)
   end
 
   def stacks(root = @config.root_branch)
