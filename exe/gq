@@ -1,12 +1,3 @@
-#!/bin/bash
-
-# Check for rbenv
-if [ -z `which rbenv` ]; then
-  # use system ruby
-  ruby -C`pwd` -e 'require "gq"; Gq::Gq.new.run' $@
-else
-  RBENV_VERSION=`rbenv global` ruby -C`pwd` -e 'require "gq"; Gq::Gq.new.run' $@
-fi
-
-
-
+#!/usr/bin/env ruby
+require "gq"
+Gq::Gq.new.run
