@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
+#!/bin/bash
+RBENV_VERSION=`rbenv global` ruby -e 'require "gq"; Gq::Gq.new.run' $@
 
-require "gq"
-
-Gq::Gq.new.run
