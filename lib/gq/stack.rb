@@ -116,13 +116,7 @@ class Stack
   def method_missing(name, *args)
     COMMANDS.each do |cmd|
       if cmd::COMMAND.include? name.to_s
-        cb = current_branch.name
-        begin
-          return cmd.new(self).call(*args)
-        ensure
-          puts "Done. Switching back to #{cb.cyan}..."
-          @git.checkout cb
-        end
+        return cmd.new(self).call(*args)
       end
     end
 

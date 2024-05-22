@@ -3,6 +3,8 @@ require_relative '../shell'
 require_relative 'command'
 
 class Sync < Command
+  include ResetableCommand
+
   COMMAND = ["sync"]
 
   CHECKMARK = "\u2713".green

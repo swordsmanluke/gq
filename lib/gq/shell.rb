@@ -115,6 +115,7 @@ def bash(command, do_fn: ->(_) {}, or_fn: ->(_) {})
     if res.success?
       do_fn.call(res)
     else
+      puts "#{`pwd`.chomp}$ #{command}\n#{indent(res.output)}"
       or_fn.call(res)
     end
   end

@@ -5,6 +5,7 @@ require_relative '../code_review/null_reviewer'
 require_relative 'command'
 
 class Submit < Command
+  include ResetableCommand
   COMMAND = ["submit"]
 
   def initialize(stack, git=Git)

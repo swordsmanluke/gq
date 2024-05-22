@@ -47,8 +47,8 @@ class Git
         return
       end
 
-      res = bash("git checkout #{branch_name}")
-      raise "Failed to checkout branch: #{red(branch_name)}\n#{res.output}" if res.failure?
+      res = bash("git -c core.hooksPath=/dev/null checkout #{branch_name}")
+      self_destruct "Failed to checkout branch: #{red(branch_name)}\n#{res.output}" if res.failure?
       nil
     end
 

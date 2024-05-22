@@ -16,3 +16,20 @@ class Command
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 end
+
+module ResetableCommand
+  def self.included(base)
+    wrapped_call = Proc.new do |*args|
+      og_call = base.method(:call)
+      cb = current_branch.name
+      begin
+        og_call.(*args)
+      ensure
+        puts "Done. Switching back to #{cb.cyan}..."
+        @git.checkout cb
+      end
+    end
+
+    base.define_method(:call, &wrapped_call)
+  end
+end
