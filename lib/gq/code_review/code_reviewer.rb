@@ -2,8 +2,8 @@
 require_relative './code_review'
 
 class Gq::CodeReview::CodeReviewer
-  def initialize(config, git: Git)
-    @config = config
+  def initialize(stack, git: Git)
+    @stack = stack
     @git = git
   end
   def review_exists?(branch_name, base = nil)

@@ -10,7 +10,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
     token = ENV['GITHUB_TOKEN']
     self_destruct "GITHUB_TOKEN environment variable not set" if token.nil?
     @client = Octokit::Client.new(access_token: token)
-    @repo = git.remote_url(@config.remote)
+    @repo = git.remote_url(@stack.config.remote)
                .split(?:)
                .last
                .split('.git')
