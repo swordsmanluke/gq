@@ -33,33 +33,17 @@ class Sync < Command
     merged_branches = pulled_branches
       .map { [@git.parent_of(_1), _1] }
       .reject { |parent, _branch| parent.nil? || parent == '' } # Don't delete roots
-      .select { |parent, branch| @git.commit_diff(parent, branch).empty? }
+      .select { |parent, branch|  }
       .map(&:last)
 
-    merged_branches.each do |ready_to_remove|
-      if Shell.prompt?("Remove merged branch #{ready_to_remove.cyan}?")
-        parent = @git.parent_of(ready_to_remove)
-        # We can't remove the current branch, so checkout the parent if necessary
-        @git.checkout(parent) if ready_to_remove == @git.current_branch.name
-
-        # Rebase any children
-        @stack.branches[ready_to_remove].children.each { |child| @git.rebase(child, parent) }
-
-        # Ok, delete the branch
-        @git.delete_branch(ready_to_remove)
-            .tap {|res| puts "Deletion failed\n#{indent(res.output)}" if res.failure? }
-
-        # And refresh our config
-        @stack.refresh
-        puts "#{CHECKMARK} #{ready_to_remove.cyan} removed"
-      end
-    end
+    merged_branches.each(&method(:remove_branch))
 
     # Now restack all our branches
     puts "Restacking Branches"
     pulled_branches.each do |branch|
       parent = @git.parent_of(branch)
       @git.rebase(branch, parent)
+      remove_branch(branch) if @git.commit_diff(parent, branch).empty?
     end
   end
 
@@ -84,6 +68,27 @@ class Sync < Command
       end
 
       result
+    end
+  end
+
+  private
+
+  def remove_branch(branch)
+    if Shell.prompt?("Remove merged branch #{branch.cyan}?\n\n#{indent(@git.commit_diff(@git.parent_of(branch), branch))}")
+      parent = @git.parent_of(branch)
+      # We can't remove the current branch, so checkout the parent if necessary
+      @git.checkout(parent) if branch == @git.current_branch.name
+
+      # Rebase any children
+      @stack.branches[branch].children.each { |child| @git.rebase(child, parent) }
+
+      # Ok, delete the branch
+      @git.delete_branch(branch)
+          .tap { |res| puts "Deletion failed\n#{indent(res.output)}" if res.failure? }
+
+      # And refresh our config
+      @stack.refresh
+      puts "#{CHECKMARK} #{branch.cyan} removed"
     end
   end
 end
