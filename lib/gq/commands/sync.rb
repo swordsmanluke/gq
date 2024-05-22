@@ -31,8 +31,9 @@ class Sync < Command
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
 
     merged_branches = pulled_branches
-      .reject { _1 == @stack.root_branch.name }
-      .select { |branch| @git.commit_diff(@git.parent_of(branch), branch).empty? }
+      .map { [@git.parent_of(_1), _1] }
+      .reject { |parent, _branch| parent.nil? || parent == '' } # Don't delete roots
+      .select { |parent, branch| @git.commit_diff(parent, branch).empty? }
 
     merged_branches.each do |ready_to_remove|
       if Shell.prompt?("Remove merged branch #{ready_to_remove.cyan}?")
@@ -45,6 +46,7 @@ class Sync < Command
 
         # Ok, delete the branch
         @git.delete_branch(ready_to_remove)
+            .tap {|res| puts "Deletion failed\n#{indent(res.output)}" if res.failure? }
 
         # And refresh our config
         @stack.refresh
