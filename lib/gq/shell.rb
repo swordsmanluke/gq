@@ -91,7 +91,7 @@ end
 class ShellResult
   attr_reader :stdout, :stderr, :exit_code
 
-  def initialize(stdout, stderr, status=nil, exit_code=nil)
+  def initialize(stdout, stderr, status=nil, exit_code: nil)
     @stdout = stdout
     @stderr = stderr
     @exit_code = status&.exitstatus || exit_code || 0
