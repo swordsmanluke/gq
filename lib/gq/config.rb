@@ -80,7 +80,7 @@ class StackConfig
         Shell.prompt "Parent Branch #{branch.parent.cyan} has been deleted - what should #{branch.name.cyan}'s new parent be?", options: @branches.keys do |new_parent|
           branch.parent = new_parent
           parent = branches[new_parent]
-          @git.track(branch.name, new_parent)
+          git.track(branch.name, new_parent)
         end
       end
       parent.children << branch.name
