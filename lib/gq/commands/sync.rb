@@ -40,7 +40,7 @@ class Sync < Command
         @git.checkout(parent) if ready_to_remove == @git.current_branch.name
 
         # Rebase any children
-        branches[ready_to_remove].children.each { |child| @git.rebase(child, parent) }
+        @stack.branches[ready_to_remove].children.each { |child| @git.rebase(child, parent) }
 
         # Ok, delete the branch
         @git.delete_branch(ready_to_remove)
