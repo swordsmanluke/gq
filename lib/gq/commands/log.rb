@@ -42,8 +42,10 @@ class Log < Command
 
   def root_as_string(root)
     out = []
+    cur_branch = @git.current_branch.name
     sorted_branches(root).each do |b|
-      out << tree("o #{b[:name].cyan}", b[:stacks].max)
+      color = b[:name] == cur_branch ? :green : :cyan
+      out << tree("o #{b[:name].send(color)}", b[:stacks].max)
     end
     out.join "\n"
   end
