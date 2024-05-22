@@ -65,9 +65,10 @@ class Stack
     stack_for(current_branch.name)
   end
 
-  def stack_for(branch)
-    stk = [branch]
-    branch = branches[branch]
+  def stack_for(branch_name)
+    stk = [branch_name]
+    branch = branches[branch_name]
+    self_destruct "Branch #{branch_name} not found in stack!" if branch.nil?
     while branch.parent && !branch.parent.empty?
       stk << branch.parent
       branch = branches[branch.parent]
