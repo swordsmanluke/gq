@@ -31,6 +31,7 @@ class Sync < Command
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
 
     merged_branches = pulled_branches
+      .reject { _1 == @stack.root_branch.name }
       .select { |branch| @git.commit_diff(@git.parent_of(branch), branch).empty? }
 
     merged_branches.each do |ready_to_remove|
