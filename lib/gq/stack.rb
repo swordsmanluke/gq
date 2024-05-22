@@ -70,6 +70,8 @@ class Stack
     branch = branches[branch_name]
 
     while branch.parent && !branch.parent&.empty?
+      next if Git.branches(:remote).include? branch.parent
+      
       stk << branch.parent
       parent = branch.parent
       branch = branches[parent]
