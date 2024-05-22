@@ -162,7 +162,6 @@ class Git
         .map { |line| parent_regex.match(line) }
         .map { |match| [match[1].split(" ").reject{_1=="*"}.first, match[3]] }
         .map { |name, parent| [name, extract_parent(parent)] }
-        .reject { |_, parent| remotes.any? { parent.start_with?("#{_1}/") }}
         .to_h
     end
 
