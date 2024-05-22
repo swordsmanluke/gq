@@ -181,6 +181,8 @@ class Git
     self_destruct("Not in a git repository") unless in_git_repo
 
     temp_branch(parent, branch) do |target_branch|
+      puts "Cloning #{parent.cyan} as temp branch #{target_branch.cyan}..."
+      puts "Git branches: #{branches.keys.map(&:cyan).join(", ")}"
       # Try cherrypicking the branch's commits into the target
       commit_diff(parent, branch)
         .map(&:first) # Just the shas
@@ -208,6 +210,7 @@ class Git
 
   def self.cherrypick(sha)
     self_destruct("Not in a git repository") unless in_git_repo
+    puts indent("cherrypicking #{sha.cyan}...")
 
     bash("git cherry-pick #{sha} --no-edit")
   end
