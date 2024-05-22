@@ -52,11 +52,11 @@ class Sync < Command
 
   def pull_all
     remote_branches = @git.branches(:remote).map(&:name)
-    to_sync = @stack.roots.map { |root| branches[root] }.compact
+    to_sync = @stack.roots.map { |root| @stack.branches[root] }.compact
 
     until to_sync.empty?
       branch = to_sync.shift
-      to_sync += branch.children.map { |child| branches[child] }
+      to_sync += branch.children.map { |child| @stack.branches[child] }
       pull_branch(branch.name, remote_branches)
     end
   end
