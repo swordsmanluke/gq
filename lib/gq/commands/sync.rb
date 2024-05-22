@@ -38,6 +38,7 @@ class Sync < Command
         @git.rebase(branch, parent)
       end
     ensure
+      puts "Done. Switching back to #{cb.cyan}..."
       @git.checkout cb
     end
   end
