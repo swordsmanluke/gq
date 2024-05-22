@@ -7,7 +7,7 @@ class Git
       `git rev-parse --is-inside-work-tree`.strip == "true"
     end
 
-    def temp_branch(parent=current_branch, slug=nil)
+    def temp_branch(parent = current_branch, slug = nil)
       self_destruct("Not in a git repository") unless in_git_repo
       raise "no block given to temp_branch" unless block_given?
 
@@ -34,7 +34,7 @@ class Git
       bash(cmd, or_fn: -> (res) { self_destruct "#{cmd}\n#{indent(res.output)}" })
     end
 
-    def fetch(remote=nil)
+    def fetch(remote = nil)
       self_destruct("Not in a git repository") unless in_git_repo
 
       bash("git fetch #{remote} -p", or_fn: -> (res) { self_destruct res.output })
@@ -69,7 +69,7 @@ class Git
         .output
         .split("\n")
         .map { _1.split(" ") }
-        .map { [_1.shift, _1.join(" ")]} # Sha, followed by everything else
+        .map { [_1.shift, _1.join(" ")] } # Sha, followed by everything else
     end
 
     def ignore(path)
@@ -100,7 +100,7 @@ class Git
       parents[branch_name]
     end
 
-    def branches(type=:local)
+    def branches(type = :local)
       self_destruct("Not in a git repository") unless in_git_repo
 
       cmd = "git branch --format='%(refname:short) %(objectname:short)'"
@@ -149,7 +149,7 @@ class Git
       og_branch = current_branch.name
       checkout(branch)
       bash("git push #{remote} #{branch}")
-        .tap { checkout og_branch }  # Restore the original branch after attempting the push, either success or failure
+        .tap { checkout og_branch } # Restore the original branch after attempting the push, either success or failure
         .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
     end
 
@@ -160,12 +160,12 @@ class Git
         .chomp
         .split("\n")
         .map { |line| parent_regex.match(line) }
-        .map { |match| [match[1].split(" ").reject{_1=="*"}.first, match[3]] }
+        .map { |match| [match[1].split(" ").reject { _1 == "*" }.first, match[3]] }
         .map { |name, parent| [name, extract_parent(parent)] }
         .to_h
     end
 
-    def commits(branch=current_branch.name, count=10)
+    def commits(branch = current_branch.name, count = 10)
       bash("git log -#{count} #{branch}")
         .stdout
         .split(/^commit [a-f0-9]+$/)
@@ -186,8 +186,8 @@ class Git
     current_branch do
       checkout(branch)
       puts "Rebasing #{branch.cyan} onto #{parent.cyan}..."
-      res = bash("git rebase #{parent}")
-      bash("git rebase --abort") if res.failure?
+      res = bash("git -c core.hooksPath=/dev/null rebase #{parent}")
+      bash("git -c core.hooksPath=/dev/null rebase --abort") if res.failure?
       return res
     end
   end
