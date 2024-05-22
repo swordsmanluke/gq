@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require 'fileutils'
+require_relative 'git'
 
 class StackConfig
   # These always come from config file or git
@@ -74,7 +75,7 @@ class StackConfig
   def link_parents
     dirty = false
     branches.values.each do |branch|
-      next if branch.parent.nil? || branch.parent.empty? || @git.remotes.any? { branch.parent.start_with?("#{_1}/") }
+      next if branch.parent.nil? || branch.parent.empty? || Git.remotes.any? { branch.parent.start_with?("#{_1}/") }
       parent = branches[branch.parent]
       while parent.nil?
         Shell.prompt "Parent Branch #{branch.parent.cyan} has been deleted - what should #{branch.name.cyan}'s new parent be?", options: @branches.keys do |new_parent|
