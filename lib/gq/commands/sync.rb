@@ -40,13 +40,9 @@ class Sync < Command
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
 
     # Now restack all our branches
-    puts "Restacking Branches"
     pulled_branches.each do |branch|
       parent = @git.parent_of(branch)
-      unless parent.nil? || parent.empty?
-        @git.rebase(branch, parent)
-        remove_branch(branch) if @git.commit_diff(parent, branch).empty?
-      end
+      remove_branch(branch) if @git.diff(parent, branch).split("\n").reject(&:empty?).empty?
     end
   end
 
@@ -100,7 +96,7 @@ class Sync < Command
     # Rebase any children
     parent = @stack.branches[branch].parent
     unless parent.nil? || parent.empty?
-      @stack.branches[branch].children.each { |child| @git.rebase(child, parent) }
+      @stack.branches[branch].children.each { |child| @git.rebase(child) }
     end
   end
 
@@ -110,8 +106,8 @@ class Sync < Command
       # We can't remove the current branch, so checkout the parent if necessary
       @git.checkout(parent) if branch == @git.current_branch.name
 
-      # Rebase any children
-      @stack.branches[branch].children.each { |child| @git.rebase(child, parent) }
+      # Update the children's tracking branch
+      @stack.branches[branch].children.each { |child| @git.track(child, parent) }
 
       # Ok, delete the branch
       @git.delete_branch(branch)

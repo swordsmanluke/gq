@@ -72,6 +72,13 @@ class Git
         .map { [_1.shift, _1.join(" ")] } # Sha, followed by everything else
     end
 
+    def diff(branch1, branch2)
+      self_destruct("Not in a git repository") unless in_git_repo
+      return [] if branch2.nil?
+
+      bash("git diff #{branch1}..#{branch2}").output
+    end
+
     def ignore(path)
       self_destruct("Not in a git repository") unless in_git_repo
 
@@ -180,7 +187,7 @@ class Git
     end
   end
 
-  def self.rebase(branch, parent)
+  def self.rebase(branch, parent=nil)
     self_destruct("Not in a git repository") unless in_git_repo
     return if branch == parent or parent.nil? or parent.empty?
     current_branch do
