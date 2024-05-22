@@ -61,7 +61,7 @@ class Git
       self_destruct("Not in a git repository") unless in_git_repo
       return [] if branch2.nil?
 
-      bash("git log #{branch2}..#{branch1} --format=oneline")
+      bash("git log #{branch1}..#{branch2} --format=oneline")
         .output
         .split("\n")
         .map { _1.split(" ") }
