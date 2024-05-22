@@ -51,7 +51,7 @@ class Log < Command
   def formatted_diff(cur_branch, parent_branch, max_len=5)
     return "" if parent_branch.nil? || cur_branch.nil?
 
-    @git.commit_diff(cur_branch, parent_branch)
+    @git.commit_diff(parent_branch, cur_branch)
         .map { |(sha, msg)| "#{sha[0..6].grey} #{msg}" }
         .then { |commits| commits.size > max_len ? commits[0..max_len] + ["    ... (#{commits.size - max_len} more)".grey] : commits[0..max_len] }
         .join("\n")

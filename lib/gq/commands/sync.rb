@@ -30,20 +30,14 @@ class Sync < Command
     results = pull_all.zip(@git.branches)
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
 
-    merged_branches = pulled_branches
-      .map { [@git.parent_of(_1), _1] }
-      .reject { |parent, _branch| parent.nil? || parent == '' } # Don't delete roots
-      .select { |parent, branch|  }
-      .map(&:last)
-
-    merged_branches.each(&method(:remove_branch))
-
     # Now restack all our branches
     puts "Restacking Branches"
     pulled_branches.each do |branch|
       parent = @git.parent_of(branch)
-      @git.rebase(branch, parent)
-      remove_branch(branch) if @git.commit_diff(parent, branch).empty?
+      unless parent.nil? || parent.empty?
+        @git.rebase(branch, parent)
+        remove_branch(branch) if @git.commit_diff(parent, branch).empty?
+      end
     end
   end
 
