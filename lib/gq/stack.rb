@@ -13,6 +13,7 @@ class Stack
     AddBranch,
     Bottom,
     Commit,
+    Checkout,
     Config,
     Down,
     Init,
