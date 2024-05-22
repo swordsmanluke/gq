@@ -29,14 +29,16 @@ class Sync < Command
     puts "Updating branch contents..."
     results = pull_all.zip(@git.branches)
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
-
+    cb = @git.current_branch
     # Now restack all our branches
     puts "Restacking Branches"
-    current_branch do
+    begin
       pulled_branches.each do |branch|
         parent = @git.parent_of(branch)
         @git.rebase(branch, parent)
       end
+    ensure
+      @git.checkout cb
     end
   end
 
