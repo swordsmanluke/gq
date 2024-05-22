@@ -44,8 +44,10 @@ class Sync < Command
       @git.checkout(branch)
       result = if remote_branches.include?("#{@git.remotes.first}/#{branch}")
                  @git.pull(remote: @stack.config.remote, remote_branch: branch)
-               else
+               elsif @git.parent_of(branch) != ''
                  @git.pull
+               else
+                 bash("")  # No parent - just do a noop to get a result object
                end
 
       if result.success?
