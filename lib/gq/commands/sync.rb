@@ -32,9 +32,11 @@ class Sync < Command
 
     # Now restack all our branches
     puts "Restacking Branches"
-    pulled_branches.each do |branch|
-      parent = @git.parent_of(branch)
-      @git.rebase(branch, parent)
+    current_branch do
+      pulled_branches.each do |branch|
+        parent = @git.parent_of(branch)
+        @git.rebase(branch, parent)
+      end
     end
   end
 
