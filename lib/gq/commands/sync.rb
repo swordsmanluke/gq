@@ -29,6 +29,8 @@ class Sync < Command
     puts "Updating branch contents..."
     results = pull_all.zip(@git.branches)
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
+    deleted_branches = @stack.branches.keys - @git.branches
+    deleted_branches.each(&method(:remove_branch))
 
     # Now restack all our branches
     puts "Restacking Branches"
