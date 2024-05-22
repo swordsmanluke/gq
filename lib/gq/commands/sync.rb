@@ -39,10 +39,13 @@ class Sync < Command
     results = pull_all.zip(@git.branches)
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
 
-    # Now restack all our branches
+    # Now check for deleted branches
     pulled_branches.each do |branch|
       parent = @git.parent_of(branch)
-      remove_branch(branch) if @git.diff(parent, branch).split("\n").reject(&:empty?).empty?
+      # Check for merged branches
+      if @git.diff(parent, branch).split("\n").reject(&:empty?).empty?
+        remove_branch(branch) unless branch == @stack.config.root_branch
+      end
     end
   end
 
