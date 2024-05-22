@@ -11,7 +11,7 @@ class Checkout < Command
 
   def call(*args)
     Shell.prompt("Branch to checkout: ", options: @git.branches.map(&:name) ) do |branch|
-      checkout_branch(branch)
+      @git.checkout(branch)
       puts `git status`
     end
   end
