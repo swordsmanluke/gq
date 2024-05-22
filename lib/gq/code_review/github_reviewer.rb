@@ -5,27 +5,16 @@ require 'octokit'
 
 class GithubReviewer < Gq::CodeReview::CodeReviewer
 
-  def initialize
+  def initialize(stack, git: Git)
     super
     token = ENV['GITHUB_TOKEN']
     self_destruct "GITHUB_TOKEN environment variable not set" if token.nil?
     @client = Octokit::Client.new(access_token: token)
-    @git = Git
-    repo_name = @git.remotes
-                    .map { @git.remote_url(_1)
-                               .split(?:)
-                               .last
-                               .split('.git')
-                               .first }
-                    .first
-
-
-    @repo = @client
-              .repos
-              .map { |repo| repo.full_name }
-              .find { |name| name == repo_name }
-
-    self_destruct "cannot find a matching github repo with remote name #{repo_name}" if @repo.nil?
+    @repo = git.remote_url(@config.remote)
+               .split(?:)
+               .last
+               .split('.git')
+               .first
   end
 
   def review_exists?(branch_name, base = nil)

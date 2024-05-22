@@ -2,6 +2,10 @@
 require_relative './code_review'
 
 class Gq::CodeReview::CodeReviewer
+  def initialize(config, git: Git)
+    @config = config
+    @git = git
+  end
   def review_exists?(branch_name, base = nil)
     raise NotImplementedError("This method must be implemented in a subclass.")
   end

@@ -12,9 +12,9 @@ class Submit < Command
     super(stack, git)
     case @stack.config.code_review_tool
     when 'github'
-      @cr_client = GithubReviewer.new
+      @cr_client = GithubReviewer.new(@stack)
     when 'none', nil, ''
-      @cr_client = NullReviewer.new
+      @cr_client = NullReviewer.new(@stack)
     else
       self_destruct "Unknown code review tool: #{@stack.config.code_review_tool}"
     end
