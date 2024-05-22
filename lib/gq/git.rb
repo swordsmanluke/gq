@@ -195,7 +195,7 @@ class Git
       res = rename_branch(branch, "for-deletion-#{branch}")
       return res if res.failure?
 
-      rename_branch(target_branch, branch)
+      rename_branch(target_branch, branch).tap { "Rename succeeded? #{res.success?}" }
     end
   end
 
@@ -204,7 +204,7 @@ class Git
     puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
     current_branch do
       checkout(old_name)
-      return bash("git branch -m #{new_name}", or_fn: ->{})
+      return bash("git branch -m #{new_name}")
     end
   end
 
