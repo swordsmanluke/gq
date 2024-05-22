@@ -6,27 +6,29 @@ class Git
     def in_git_repo
       `git rev-parse --is-inside-work-tree`.strip == "true"
     end
-    
-    def temp_branch(parent=current_branch)
+
+    def temp_branch(parent=current_branch, slug=nil)
       self_destruct("Not in a git repository") unless in_git_repo
       raise "no block given to temp_branch" unless block_given?
-      
-      branchname = "temp-#{parent}-#{SecureRandom.hex(4)}"
-      begin
-        # Create the branch, but don't switch to it or nothin'
-        bash("git branch -b #{branchname} -t #{parent}")
-        yield branchname
-      ensure
-        delete_branch(branchname)
+
+      branchname = ["temp", slug, SecureRandom.hex(4)].compact.join("-")
+      current_branch do
+        begin
+          # Create the branch, but don't switch to it or nothin'
+          bash("git checkout -b #{branchname} -t #{parent}")
+          yield branchname
+        ensure
+          delete_branch(branchname)
+        end
       end
     end
 
     def pull(remote: nil, remote_branch: nil)
       self_destruct("Not in a git repository") unless in_git_repo
       cmd = if remote && remote_branch
-        "git pull #{remote} #{remote_branch}"
-      else
-        "git pull"
+              "git pull #{remote} #{remote_branch}"
+            else
+              "git pull"
             end
 
       bash(cmd, or_fn: -> (res) { self_destruct "#{cmd}\n#{indent(res.output)}" })
@@ -121,7 +123,7 @@ class Git
       self_destruct("Not in a git repository") unless in_git_repo
       bash("git commit #{args}")
     end
-    
+
     def merge(other_branch)
       self_destruct("Not in a git repository") unless in_git_repo
       bash("git merge #{other_branch} --no-edit")
@@ -178,12 +180,12 @@ class Git
   def self.rebase(branch, parent)
     self_destruct("Not in a git repository") unless in_git_repo
 
-    temp_branch(parent) do |target_branch|
+    temp_branch(parent, branch) do |target_branch|
       # Try cherrypicking the branch's commits into the target
       commit_diff(parent, branch)
         .map(&:first) # Just the shas
         .each do |sha|
-        res = cherrypick(sha, target_branch)
+        res = cherrypick(sha)
         return res if res.failure?
       end
 
@@ -204,10 +206,10 @@ class Git
     end
   end
 
-  def self.cherrypick(sha, branch=current_branch)
+  def self.cherrypick(sha)
     self_destruct("Not in a git repository") unless in_git_repo
 
-    bash("git cherry-pick #{sha} #{branch} --no-edit")
+    bash("git cherry-pick #{sha} --no-edit")
   end
 
   def self.delete_branch(branch)
@@ -233,6 +235,6 @@ class Branch
 
   def initialize(name, sha)
     @name = name
- @sha = sha
+    @sha = sha
   end
 end
