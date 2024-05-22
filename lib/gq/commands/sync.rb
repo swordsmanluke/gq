@@ -47,7 +47,8 @@ class Sync < Command
                elsif @git.parent_of(branch) != ''
                  @git.pull
                else
-                 bash("")  # No parent - just do a noop to get a result object
+                 # No remote branch or no parent, so nothing to pull
+                 ShellResult.new('', '', 0)
                end
 
       if result.success?
