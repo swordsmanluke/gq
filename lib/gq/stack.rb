@@ -70,9 +70,6 @@ class Stack
     branch = branches[branch_name]
 
     while branch.parent && !branch.parent.empty? && branch.parent != @config.root_branch
-      puts "branch.parent: #{branch.parent.cyan}"
-      next if Git.branches(:remote).include? branch.parent
-
       stk << branch.parent
       parent = branch.parent
       branch = branches[parent]
