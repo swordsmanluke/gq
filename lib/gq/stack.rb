@@ -112,7 +112,6 @@ class Stack
           puts "Done. Switching back to #{cb.cyan}..."
           @git.checkout cb
         end
-        end
       end
     end
 
