@@ -21,7 +21,11 @@ class Top < Command
         @git.checkout(current.children.first)
       else
         child = Shell.prompt("Multiple branches - choose one", options: current.children)
-        @git.checkout(child) if child
+        if child
+          @git.checkout(child)
+        else
+          self_destruct("Top command cancelled.")
+        end
       end
     end
 
