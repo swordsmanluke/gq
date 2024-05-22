@@ -74,7 +74,7 @@ class StackConfig
   def link_parents
     dirty = false
     branches.values.each do |branch|
-      next if branch.parent.nil? || branch.parent.empty?
+      next if branch.parent.nil? || branch.parent.empty? || branch.parent.start_with?(@remote)
       parent = branches[branch.parent]
       while parent.nil?
         Shell.prompt "Parent Branch #{branch.parent.cyan} has been deleted - what should #{branch.name.cyan}'s new parent be?", options: @branches.keys do |new_parent|
