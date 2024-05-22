@@ -40,7 +40,7 @@ class Sync < Command
 
   def pull_all
     remote_branches = @git.branches(:remote).map(&:name)
-    @git.branches(:local).map(&:name).each do |branch|
+    @git.branches(:local).map(&:name).map do |branch|
       @git.checkout(branch)
       result = if remote_branches.include?("#{@git.remotes.first}/#{branch}")
                  @git.pull(remote: @stack.config.remote, remote_branch: branch)
