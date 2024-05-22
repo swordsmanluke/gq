@@ -13,17 +13,13 @@ class Log < Command
   end
 
   def as_string
-    out = []
-    sorted_branches.each do |b|
-      out << tree("o #{b[:name].cyan}", b[:stacks].max)
-    end
-    out.join"\n"
+    @stack.roots.map(&method(:root_as_string)).join("\n----------------\n")
   end
 
-  def sorted_branches
+  def sorted_branches(root)
     max_depth = @stack.stacks.map(&:size).max
     @stack
-      .stacks
+      .stacks(root)
       .map { |s| s.map { |b| { depth: s.index(b), name: b, stacks: [] } } }
       .each_with_index
       .reduce({}, &method(:track_stack_presence))
@@ -35,7 +31,6 @@ class Log < Command
 
   def track_stack_presence(all_branches, (stack, stack_id))
     stack.each do |branch|
-      puts "#{stack_id.to_s.green}: #{branch[:name].cyan}"
       all_branches[branch[:name]] = branch unless all_branches.key?(branch[:name])
       all_branches[branch[:name]][:stacks] << stack_id
       all_branches[branch[:name]][:stacks].uniq!  # Remove any dupes!
@@ -44,6 +39,14 @@ class Log < Command
   end
 
   private
+
+  def root_as_string(root)
+    out = []
+    sorted_branches(root).each do |b|
+      out << tree("o #{b[:name].cyan}", b[:stacks].max)
+    end
+    out.join "\n"
+  end
 
   def formatted_diff(cur_branch, parent_branch, max_len=5)
     return "" if parent_branch.nil? || cur_branch.nil?

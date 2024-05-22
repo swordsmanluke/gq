@@ -70,10 +70,13 @@ class Stack
     stk.reverse
   end
 
-  def stacks
+  def roots
+    branches.values.select { |b| b.parent.nil? || b.parent.empty? }.map(&:name)
+  end
+
+  def stacks(root = @config.root_branch)
     # Each unique path from root -> leaf is a stack.
-    dfs([], @config.root_branch, [])
-      .sort_by { |path| puts path.join("->") + "#{path.count}"; path.count }
+    dfs([], root, [])
   end
 
   def to_s
@@ -91,6 +94,9 @@ class Stack
 
   def dfs(path, branch, stacks)
     path << branch
+    unless branches.include? branch
+      puts "Branch #{branch} not in stack!"
+    end
     if branches[branch].children.empty?
       stacks << path.dup
     else
