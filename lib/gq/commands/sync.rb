@@ -26,11 +26,12 @@ class Sync < Command
     puts "Fetching from remote #{remote.cyan}..."
     @git.fetch(remote)
 
+    deleted_branches = @stack.branches.keys - @git.branches
+    deleted_branches.each(&method(:forget_branch))
+
     puts "Updating branch contents..."
     results = pull_all.zip(@git.branches)
     pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
-    deleted_branches = @stack.branches.keys - @git.branches
-    deleted_branches.each(&method(:remove_branch))
 
     # Now restack all our branches
     puts "Restacking Branches"
@@ -68,6 +69,15 @@ class Sync < Command
   end
 
   private
+
+  def forget_branch(branch)
+    # This branch was removed from git, but still exists in our config - relink parents
+    # Rebase any children
+    @stack.branches[branch].children.each { |child| @git.rebase(child, parent) }
+
+    # Refresh the stack
+    @stack.refresh
+  end
 
   def remove_branch(branch)
     if Shell.prompt?("Remove merged branch #{branch.cyan}?\n\n#{indent(@git.commit_diff(@git.parent_of(branch), branch).join("\n"))}")
