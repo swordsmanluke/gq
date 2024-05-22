@@ -77,7 +77,15 @@ class Git
 
       name = `git branch --show-current`.chomp
       sha = `git rev-parse --short HEAD`.chomp
-      Branch.new(name, sha)
+      Branch.new(name, sha).tap do |b|
+        if block_given?
+          begin
+            yield b
+          ensure
+            checkout(b.name)
+          end
+        end
+      end
     end
 
     def parent_of(branch_name)
@@ -190,7 +198,10 @@ class Git
   def self.rename_branch(old_name, new_name)
     self_destruct("Not in a git repository") unless in_git_repo
     puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
-    bash("git branch -m #{old_name} #{new_name}").tap { puts(indent(_1.output)) }
+    current_branch do
+      checkout(old_name)
+      bash("git branch -m #{new_name}")
+    end
   end
 
   def self.cherrypick(sha, branch=current_branch)
