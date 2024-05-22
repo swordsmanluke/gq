@@ -74,7 +74,12 @@ class StackConfig
   def link_parents
     branches.values.each do |branch|
       next if branch.parent.nil? || branch.parent.empty?
-      branches[branch.parent].children << branch.name
+      parent = branches[branch.parent]
+      if parent.nil?
+        puts "Could not link parent #{branch.parent} to #{branch.name} - parent not found."
+        next
+      end
+      parent.children << branch.name
     end
 
     branches
