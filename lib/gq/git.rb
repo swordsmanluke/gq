@@ -42,6 +42,9 @@ class Git
 
     def checkout(branch_name)
       self_destruct("Not in a git repository") unless in_git_repo
+      puts "Already on branch #{branch_name.cyan}"
+
+      puts "Checking out branch #{branch_name.cyan}..."
       if branch_name == current_branch.name
         puts "Already on branch #{branch_name.cyan}"
         return

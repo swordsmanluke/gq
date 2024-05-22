@@ -15,6 +15,7 @@ class Top < Command
     # or printing an error if there are none.
     current = @stack.current_branch
     self_destruct("Already at the top") if current.children.empty?
+
     until current.children.empty?
       if current.children.size == 1
         @git.checkout(current.children.first)
@@ -23,5 +24,7 @@ class Top < Command
         @git.checkout(child) if child
       end
     end
+
+    puts `git status`
   end
 end
