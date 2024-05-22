@@ -26,9 +26,9 @@ class Git
     def pull(remote: nil, remote_branch: nil)
       self_destruct("Not in a git repository") unless in_git_repo
       cmd = if remote && remote_branch
-              "git pull #{remote} #{remote_branch}"
+              "git -c core.hooksPath=/dev/null pull #{remote} #{remote_branch}"
             else
-              "git pull"
+              "git -c core.hooksPath=/dev/null pull"
             end
 
       bash(cmd, or_fn: -> (res) { self_destruct "#{cmd}\n#{indent(res.output)}" })
