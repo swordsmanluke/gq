@@ -148,7 +148,7 @@ class Git
 
       og_branch = current_branch.name
       checkout(branch)
-      bash("git push #{remote} #{branch}")
+      bash("git -c core.hooksPath=/dev/null push #{remote} #{branch}")
         .tap { checkout og_branch } # Restore the original branch after attempting the push, either success or failure
         .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
     end
