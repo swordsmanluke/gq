@@ -179,23 +179,13 @@ class Git
 
   def self.rebase(branch, parent)
     self_destruct("Not in a git repository") unless in_git_repo
-
-    temp_branch(parent, branch) do |target_branch|
-      puts "Cloning #{parent.cyan} as temp branch #{target_branch.cyan}..."
-      puts "Git branches: #{branches.map(&:name).map(&:cyan).join(", ")}"
-      # Try cherrypicking the branch's commits into the target
-      commit_diff(parent, branch)
-        .map(&:first) # Just the shas
-        .each do |sha|
-        res = cherrypick(sha)
-        return res if res.failure?
-      end
-
-      # If we get this far, everything applied cleanly - rename the branches to make a swap
-      res = rename_branch(branch, "for-deletion-#{branch}")
-      return res if res.failure?
-
-      rename_branch(target_branch, branch).tap { "Rename succeeded? #{res.success?}" }
+    return if branch == parent or parent.nil? or parent.empty?
+    current_branch do
+      checkout(branch)
+      puts "Rebasing #{branch.cyan} onto #{parent.cyan}..."
+      res = bash("git rebase #{parent}")
+      bash("git rebase --abort") if res.failure?
+      return res
     end
   end
 
