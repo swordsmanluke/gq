@@ -77,6 +77,7 @@ class StackConfig
       parent = branches[branch.parent]
       while parent.nil?
         Shell.prompt "Parent Branch #{branch.parent.cyan} has been deleted - what should #{branch.name.cyan}'s new parent be?", options: @branches.keys do |new_parent|
+          branch.parent = new_parent
           parent = branches[new_parent]
         end
       end
