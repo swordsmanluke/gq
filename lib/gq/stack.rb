@@ -11,6 +11,7 @@ class Stack
   attr_reader :config
   COMMANDS = [
     AddBranch,
+    Bottom,
     Commit,
     Config,
     Down,
@@ -19,6 +20,7 @@ class Stack
     Restack,
     Sync,
     Submit,
+    Top,
     Up,
   ]
 

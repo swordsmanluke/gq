@@ -18,5 +18,7 @@ class Down < Command
     else
       @git.checkout(current.parent)
     end
+
+    puts `git status`
   end
 end

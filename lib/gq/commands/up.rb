@@ -22,5 +22,7 @@ class Up < Command
       child = Shell.prompt("Multiple branches - choose one", options: current.children)
       @git.checkout(child) if child
     end
+
+    puts `git status`
   end
 end
