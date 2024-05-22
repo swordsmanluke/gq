@@ -61,7 +61,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   end
 
   def to_gq_review(pr)
-    Review.new(pr.id, pr.html_url)
+    ::Gq::CodeReview::Review.new(pr.id, pr.html_url)
   end
 
   def merge_review(branch_name, base = nil)
