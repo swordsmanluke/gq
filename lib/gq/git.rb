@@ -182,7 +182,7 @@ class Git
 
     temp_branch(parent, branch) do |target_branch|
       puts "Cloning #{parent.cyan} as temp branch #{target_branch.cyan}..."
-      puts "Git branches: #{branches.keys.map(&:cyan).join(", ")}"
+      puts "Git branches: #{branches.map(&:name).map(&:cyan).join(", ")}"
       # Try cherrypicking the branch's commits into the target
       commit_diff(parent, branch)
         .map(&:first) # Just the shas
