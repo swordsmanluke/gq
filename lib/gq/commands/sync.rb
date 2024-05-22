@@ -34,6 +34,7 @@ class Sync < Command
       .map { [@git.parent_of(_1), _1] }
       .reject { |parent, _branch| parent.nil? || parent == '' } # Don't delete roots
       .select { |parent, branch| @git.commit_diff(parent, branch).empty? }
+      .map(&:last)
 
     merged_branches.each do |ready_to_remove|
       if Shell.prompt?("Remove merged branch #{ready_to_remove.cyan}?")
