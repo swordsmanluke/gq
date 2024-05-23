@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Stacked Commit management for Git"
   spec.description = "GQ is a tool for managing stacked commits in Git. It provides a simple interface for managing a commands of commits, allowing you to easily reorder, squash, and edit commits before pushing them to a remote repository. Gq is designed to be fast, lightweight, and easy to use, making it a great tool for developers who want to keep their commit history clean and organized."
   spec.homepage = "http://perfectlunacy.com"
-  spec.license = "GPLV2"
+  spec.license = "GPL-2.0"
   spec.required_ruby_version = ">= 3.1.4"
 
   spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
@@ -35,7 +35,13 @@ Gem::Specification.new do |spec|
   spec.add_dependency "toml"
   spec.add_dependency "optparse"
   spec.add_dependency "octokit"
-  spec.add_dependency "faraday-retry" # Shuts up a warning
+  spec.add_dependency "net-http", '~> 0.4.1'
+  #spec.add_dependency "faraday-retry" # Shuts up a warning
+
+  # Build / Dev dependencies
+  spec.add_development_dependency "rspec"
+  # spec.add_development_dependency "byebug"
+  # byebug-11.1.3, json-2.7.2, racc-1.7.3, net-http-0.4.1
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

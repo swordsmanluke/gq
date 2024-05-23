@@ -1,3 +1,13 @@
 #!/bin/bash
 
-bundle exec rake install
+# bundle exec rake install
+
+if [ ! -d ./out ]; then
+	mkdir ./out
+fi
+
+docker build ./docker -t tebako 
+docker run \
+	-e EXEC_NAME=gq \
+	-v `pwd`:/project \
+	tebako 
