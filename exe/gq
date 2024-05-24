@@ -1,0 +1,4 @@
+#!/bin/bash
+export RBENV_VERSION=`rbenv global`
+
+ruby -e 'require "gq"; Gq::Gq.new.run' "$@"
