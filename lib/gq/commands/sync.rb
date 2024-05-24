@@ -36,17 +36,12 @@ class Sync < Command
     @stack.refresh if deleted_branches.any?
 
     puts "Updating branch contents..."
-    results = pull_all.zip(@git.branches)
-    pulled_branches = results.select { |result, _| result.success? }.map(&:last).map(&:name)
-
-    # Now check for deleted branches
-    pulled_branches.each do |branch|
-      parent = @git.parent_of(branch)
-      # Check for merged branches
-      if @git.diff(parent, branch).split("\n").reject(&:empty?).empty?
-        remove_branch(branch) unless branch == @stack.config.root_branch
-      end
-    end
+    pull_all
+      .each { puts format_result(_1) }
+      .select { _1[:success] }
+      .map {  [_1[:branch], @git.parent_of(_1[:branch])] }
+      .select { |(branch, parent)| @git.diff(parent, branch).split("\n").reject(&:empty?).empty? }
+      .each { |(branch, _parent)| remove_branch(branch) }
   end
 
   def pull_all
@@ -56,40 +51,40 @@ class Sync < Command
       until to_sync.empty?
         branch = to_sync.shift
         to_sync += branch.children.map { |child| @stack.branches[child] }
-        results << pull_branch(branch.name, remote_branches)
+        matching_remote_branches = remote_branches.filter { |rb| rb == "#{@stack.config.remote}/#{branch.name}" }
+        results << sync_branch(branch.name, matching_remote_branches)
       end
     end
   end
 
   protected
 
-  def pull_branch(branch, remote_branches)
+  def format_result(result)
+    mark = result[:success] ? CHECKMARK : RED_X
+    [
+      "#{mark} #{result[:branch].cyan}",
+      indent(result[:output])
+    ].reject(&:empty?).join("\n")
+  end
+
+  def is_local_branch?(branch)
+    return false if branch.nil? || branch.empty?
+
+    @git.branches(:local).map(&:name).include?(branch)
+  end
+
+  def sync_branch(branch, remote_branches)
     @git.checkout(branch)
-    result = if remote_branches.include?("#{@stack.config.remote}/#{branch}")
-               @git.pull(remote: @stack.config.remote, remote_branch: branch)
-             elsif @git.parent_of(branch) != ''
-               if @git.parent_of(branch).start_with?(@stack.config.remote)
-                 if Shell.prompt? "#{RED_X} #{branch.cyan}'s remote branch has been deleted. Delete branch?"
-                   remove_branch(branch)
-                 else
-                   ShellResult.new('', '', exit_code: 0)
-                 end
-               else
-                 @git.pull
-               end
-             else
-               # No remote branch or no parent, so nothing to pull
-               ShellResult.new('', '', exit_code: 0)
-             end
+    # Sync remote content first
+    remote_branches.each { @git.pull(@stack.config.remote, branch) }
+    # Then sync with the local parent if present
+    result = @git.pull if is_local_branch?(@git.parent_of(branch))
 
-    if result.success?
-      puts "#{CHECKMARK} #{branch.cyan}"
+    if result.nil? || result.success?
+      { success: true, branch: branch }
     else
-      puts "#{RED_X} #{branch.cyan}"
-      puts indent(result.output)
+      { success: false, branch: branch, output: result.output }
     end
-
-    result
   end
 
   private
@@ -104,7 +99,9 @@ class Sync < Command
   end
 
   def remove_branch(branch)
-    if Shell.prompt?("Remove merged branch #{branch.cyan}?\n\n#{indent(@git.commit_diff(@git.parent_of(branch), branch).join("\n"))}")
+    return if branch == @stack.root.name
+    
+    if Shell.prompt?("Remove merged branch #{branch.cyan}?")
       parent = @git.parent_of(branch)
       # We can't remove the current branch, so checkout the parent if necessary
       @git.checkout(parent) if branch == @git.current_branch.name

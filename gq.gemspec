@@ -1,8 +1,8 @@
 # frozen_string_literal: true
-
+require_relative 'lib/gq/version'
 Gem::Specification.new do |spec|
   spec.name = "gq"
-  spec.version = "0.1.0"
+  spec.version = Gq::VERSION
   spec.authors = ["Lucas Taylor"]
   spec.email = ["lucas@perfectlunacy.com"]
 

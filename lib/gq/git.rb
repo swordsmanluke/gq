@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 require_relative "shell"
+require_relative 'git/git'
 
 class Git
-  class << self
-    def in_git_repo
-      `git rev-parse --is-inside-work-tree`.strip == "true"
-    end
+  include GitBase
 
+  class << self
+    ### Actions
     def temp_branch(parent = current_branch, slug = nil)
       self_destruct("Not in a git repository") unless in_git_repo
       raise "no block given to temp_branch" unless block_given?
@@ -23,15 +23,8 @@ class Git
       end
     end
 
-    def pull(remote: nil, remote_branch: nil)
-      self_destruct("Not in a git repository") unless in_git_repo
-      cmd = if remote && remote_branch
-              "git -c core.hooksPath=/dev/null pull #{remote} #{remote_branch}"
-            else
-              "git -c core.hooksPath=/dev/null pull"
-            end
-
-      bash(cmd, or_fn: -> (res) { self_destruct "#{cmd}\n#{indent(res.output)}" })
+    def pull(*args, **kwargs)
+      git("pull", *args, **kwargs)
     end
 
     def fetch(remote = nil)
@@ -47,6 +40,92 @@ class Git
       res = bash("git -c core.hooksPath=/dev/null checkout #{branch_name}")
       self_destruct "Failed to checkout branch: #{red(branch_name)}\n#{res.output}" if res.failure?
       nil
+    end
+
+    def ignore(path)
+      self_destruct("Not in a git repository") unless in_git_repo
+
+      bash("echo #{path} >> .gitignore") unless File.readlines(".gitignore").any? { |line| line.chomp == path }
+    end
+
+    def new_branch(branch_name, tracking: nil)
+      self_destruct("Not in a git repository") unless in_git_repo
+
+      args = ["-b #{branch_name}"]
+      args << "--track #{tracking}" if tracking
+
+      bash("git checkout #{args.join(" ")}")
+        .tap { |res| self_destruct("Failed to create branch: #{red(branch_name)}\n#{res.output}") if res.failure? }
+      current_branch
+    end
+
+    def commit(args)
+      self_destruct("Not in a git repository") unless in_git_repo
+      bash("git commit #{args}")
+    end
+
+    def merge(other_branch)
+      self_destruct("Not in a git repository") unless in_git_repo
+      bash("git merge #{other_branch} --no-edit")
+    end
+
+    def push(branch, remote: nil)
+      self_destruct("Not in a git repository") unless in_git_repo
+
+      og_branch = current_branch.name
+      checkout(branch)
+      bash("git -c core.hooksPath=/dev/null push #{remote} #{branch}")
+        .tap { checkout og_branch } # Restore the original branch after attempting the push, either success or failure
+        .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
+    end
+
+    def rebase(branch, parent = nil)
+      self_destruct("Not in a git repository") unless in_git_repo
+      return if branch == parent or parent.nil? or parent.empty?
+      current_branch do
+        checkout(branch)
+        puts "Rebasing #{branch.cyan} onto #{parent.cyan}..."
+        res = bash("git -c core.hooksPath=/dev/null rebase #{parent}")
+        bash("git -c core.hooksPath=/dev/null rebase --abort") if res.failure?
+        return res
+      end
+    end
+
+    def rename_branch(old_name, new_name)
+      self_destruct("Not in a git repository") unless in_git_repo
+      puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
+      checkout(old_name)
+      return bash("git branch -m #{new_name}")
+    end
+
+    def cherrypick(sha)
+      self_destruct("Not in a git repository") unless in_git_repo
+      puts indent("cherrypicking #{sha.cyan}...")
+
+      bash("git cherry-pick #{sha} --no-edit")
+    end
+
+    def delete_branch(branch)
+      self_destruct("Not in a git repository") unless in_git_repo
+      bash("git branch -d #{branch}")
+    end
+
+    def track(child, parent)
+      self_destruct("Not in a git repository") unless in_git_repo
+      og_branch = if current_branch != child
+                    current_branch
+                    checkout(child)
+                  end
+
+      bash("git branch --set-upstream-to=#{parent}")
+        .tap { checkout(og_branch) if og_branch }
+        .tap { self_destruct("Failed to track branch: #{red(child)}") if _1.failure? }
+    end
+
+    ### Data
+
+    def in_git_repo
+      `git rev-parse --is-inside-work-tree`.strip == "true"
     end
 
     def root_dir
@@ -74,12 +153,6 @@ class Git
       return [] if branch2.nil?
 
       bash("git diff #{branch1}..#{branch2}").output
-    end
-
-    def ignore(path)
-      self_destruct("Not in a git repository") unless in_git_repo
-
-      bash("echo #{path} >> .gitignore") unless File.readlines(".gitignore").any? { |line| line.chomp == path }
     end
 
     def current_branch
@@ -116,27 +189,6 @@ class Git
         .map { |name_and_hash| Branch.new(*name_and_hash.split(" ")) }
     end
 
-    def new_branch(branch_name, tracking: nil)
-      self_destruct("Not in a git repository") unless in_git_repo
-
-      args = ["-b #{branch_name}"]
-      args << "--track #{tracking}" if tracking
-
-      bash("git checkout #{args.join(" ")}")
-        .tap { |res| self_destruct("Failed to create branch: #{red(branch_name)}\n#{res.output}") if res.failure? }
-      current_branch
-    end
-
-    def commit(args)
-      self_destruct("Not in a git repository") unless in_git_repo
-      bash("git commit #{args}")
-    end
-
-    def merge(other_branch)
-      self_destruct("Not in a git repository") unless in_git_repo
-      bash("git merge #{other_branch} --no-edit")
-    end
-
     def remotes
       self_destruct("Not in a git repository") unless in_git_repo
       bash("git remote").stdout.split("\n")
@@ -145,16 +197,6 @@ class Git
     def remote_url(remote)
       self_destruct("Not in a git repository") unless in_git_repo
       bash("git remote get-url #{remote}").stdout
-    end
-
-    def push(branch, remote: nil)
-      self_destruct("Not in a git repository") unless in_git_repo
-
-      og_branch = current_branch.name
-      checkout(branch)
-      bash("git -c core.hooksPath=/dev/null push #{remote} #{branch}")
-        .tap { checkout og_branch } # Restore the original branch after attempting the push, either success or failure
-        .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
     end
 
     def parents
@@ -176,55 +218,12 @@ class Git
         .reject(&:empty?)
     end
 
-    private
+    # Helper functions
 
     def extract_parent(parent)
       return "" if parent.nil? || parent.empty?
       parent.split(":").first
     end
-  end
-
-  def self.rebase(branch, parent=nil)
-    self_destruct("Not in a git repository") unless in_git_repo
-    return if branch == parent or parent.nil? or parent.empty?
-    current_branch do
-      checkout(branch)
-      puts "Rebasing #{branch.cyan} onto #{parent.cyan}..."
-      res = bash("git -c core.hooksPath=/dev/null rebase #{parent}")
-      bash("git -c core.hooksPath=/dev/null rebase --abort") if res.failure?
-      return res
-    end
-  end
-
-  def self.rename_branch(old_name, new_name)
-    self_destruct("Not in a git repository") unless in_git_repo
-    puts "Renaming #{old_name.cyan} to #{new_name.cyan}..."
-    checkout(old_name)
-    return bash("git branch -m #{new_name}")
-  end
-
-  def self.cherrypick(sha)
-    self_destruct("Not in a git repository") unless in_git_repo
-    puts indent("cherrypicking #{sha.cyan}...")
-
-    bash("git cherry-pick #{sha} --no-edit")
-  end
-
-  def self.delete_branch(branch)
-    self_destruct("Not in a git repository") unless in_git_repo
-    bash("git branch -d #{branch}")
-  end
-
-  def self.track(child, parent)
-    self_destruct("Not in a git repository") unless in_git_repo
-    og_branch = if current_branch != child
-                  current_branch
-                  checkout(child)
-                end
-
-    bash("git branch --set-upstream-to=#{parent}")
-      .tap { checkout(og_branch) if og_branch }
-      .tap { self_destruct("Failed to track branch: #{red(child)}") if _1.failure? }
   end
 end
 

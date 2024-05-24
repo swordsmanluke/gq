@@ -1,4 +1,7 @@
 #!/bin/bash
 
+bundle exec rake version:bump
+VERSION=$(bundle exec rake version)
+git commit -am "Version $VERSION"
 bundle install
 bundle exec rake install

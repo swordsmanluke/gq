@@ -31,6 +31,7 @@ def tree(string, depth, fill = "  ")
 end
 
 def indent(string, fill = "  ")
+  return "" if string.nil?
   string.split("\n").map { fill + _1 }.join("\n")
 end
 
