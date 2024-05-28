@@ -107,7 +107,9 @@ class Git
 
     def delete_branch(branch)
       self_destruct("Not in a git repository") unless in_git_repo
-      bash("git branch -d #{branch}")
+      result = git"branch -D #{branch}"
+      puts result.output
+      result
     end
 
     def track(child, parent)
