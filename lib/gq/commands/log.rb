@@ -45,9 +45,11 @@ class Log < Command
     cur_branch = @git.current_branch.name
     sorted_branches(root).each do |b|
       color = b[:name] == cur_branch ? :green : :cyan
-      out << tree("o #{b[:name].send(color)}", b[:stacks].max)
+      depth = b[:stacks].max
+      out << tree("o #{b[:name].send(color)}", depth)
+      out << tree(indent(formatted_diff(b[:name], @git.parent_of(b[:name])), " | "), depth - 1)
     end
-    out.join "\n"
+    out.reject(&:empty?).join "\n"
   end
 
   def formatted_diff(cur_branch, parent_branch, max_len=5)

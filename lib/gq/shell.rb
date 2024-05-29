@@ -27,6 +27,8 @@ def grey(string)
 end
 
 def tree(string, depth, fill = "  ")
+  return string unless depth > 0
+
   indent(string, fill * depth)
 end
 
