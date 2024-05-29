@@ -26,6 +26,42 @@ def grey(string)
   string.grey
 end
 
+def gold(string)
+  string.gold
+end
+
+def bright_yellow(string)
+  string.bright_yellow
+end
+
+def bright_white(string)
+  string.bright_white
+end
+
+def magenta(string)
+  string.magenta
+end
+
+def bright_magenta(string)
+  string.bright_magenta
+end
+
+def orange(string)
+  string.orange
+end
+
+def lime(string)
+  string.lime
+end
+
+def pink(string)
+  string.pink
+end
+
+def blue(string)
+  string.blue
+end
+
 def tree(string, depth, fill = "  ")
   return string unless depth > 0
 
@@ -60,6 +96,38 @@ class String
 
   def grey
     "\e[90m#{self}\e[0m"
+  end
+
+  def bright_white
+    "\e[97m#{self}\e[0m"
+  end
+
+  def magenta
+    "\e[35m#{self}\e[0m"
+  end
+
+  def bright_magenta
+    "\e[95m#{self}\e[0m"
+  end
+
+  def orange
+    "\e[38;5;208m#{self}\e[0m"
+  end
+
+  def lime
+    "\e[38;5;154m#{self}\e[0m"
+  end
+
+  def pink
+    "\e[38;5;206m#{self}\e[0m"
+  end
+
+  def blue
+    "\e[38;5;75m#{self}\e[0m"
+  end
+
+  def gold
+    "\e[38;5;220m#{self}\e[0m"
   end
 end
 
