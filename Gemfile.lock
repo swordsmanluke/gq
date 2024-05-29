@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    gq (0.2.4)
+    gq (0.2.5)
       faraday-retry
       octokit
       optparse
