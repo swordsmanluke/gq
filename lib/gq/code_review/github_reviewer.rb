@@ -7,9 +7,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def initialize(stack, git: Git)
     super
-    token = ENV['GITHUB_TOKEN']
-    self_destruct "GITHUB_TOKEN environment variable not set" if token.nil?
-    @client = Octokit::Client.new(access_token: token)
+    @client = build_client
     @repo = git.remote_url(@stack.config.remote)
                .split(?:)
                .last
@@ -23,11 +21,11 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
       .any?
   end
 
-  def reviews(branch_name, base = nil)
+  def reviews(branch_name=nil, base = nil)
     # TODO: There's a 'head' filter, that takes a branch name, but prefixed
     # by a head 'user' or 'organization'. I'm not certain yet how to get that.
     @client.pull_requests(@repo, state: 'open', base: base)
-           .select { |pr| pr.head.ref == branch_name }
+           .then { |prs| branch_name ? prs.select { |pr| pr.head.ref == branch_name } : prs }
   end
 
   def create_review(branch_name, base = nil, title = nil, body = nil)
@@ -56,5 +54,55 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   def merge_review(branch_name, base = nil)
     # TODO
     super
+  end
+
+  protected
+
+  def build_client
+    # Try authenticating a few ways.
+    # While a _token_ is the best, we'll prioritize by the following:
+    # 1. github_user/github_password in the config
+    # 2. github_token in the config
+    # 3. GITHUB_USER/GITHUB_PASSWORD environment variables
+    # 4. GITHUB_TOKEN environment variable
+    #
+    # e.g. values in the config file take precedence over environment variables
+    #      and user/password take precedence over tokens.
+
+    # The first non-nil client will be returned
+    [
+      -> { client_from_user_pass_config },
+      -> { client_from_token_config },
+      -> { client_from_user_pass_env },
+      -> { client_from_token_env }
+    ].find{|client_method| client_method.()}.call
+  end
+
+  def client_from_user_pass_config
+    auth_with_user_pass(@stack.config.cr_username, @stack.config.cr_password)
+  end
+
+  def client_from_token_config
+    auth_with_token(@stack.config.cr_token)
+  end
+
+  def client_from_user_pass_env
+    auth_with_user_pass(ENV['GITHUB_USER'], ENV['GITHUB_PASSWORD'])
+  end
+
+  def client_from_token_env
+    auth_with_token(ENV['GITHUB_TOKEN'])
+  end
+
+  def auth_with_user_pass(user, pass)
+    return nil if user.nil? || user.empty? || pass.nil? || pass.empty?
+
+    Octokit::Client.new(login: user, password: pass)
+  end
+
+  def auth_with_token(token)
+    return nil if token.nil? || token.empty?
+
+    Octokit::Client.new(access_token: token)
   end
 end

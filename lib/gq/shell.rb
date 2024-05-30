@@ -144,6 +144,11 @@ class Shell
              "input"
            end
 
+    if flags.include?(:secret)
+      message = "#{message} (hidden)"
+      args << "--password"
+    end
+
     args << "--placeholder '#{placeholder}'" if placeholder
 
     cmd = "gum #{mode} #{args.join ' '}".chomp

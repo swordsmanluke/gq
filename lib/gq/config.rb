@@ -6,7 +6,7 @@ class StackConfig
   # These always come from config file or git
   attr_reader :branches, :version
   # These are set by the user, so we need to be able to update them
-  attr_accessor :root_branch, :remote, :code_review_tool
+  attr_accessor :root_branch, :remote, :code_review_tool, :cr_username, :cr_password, :cr_token
   VERSION = 1
 
   def initialize(branches={}, **attrs)
@@ -18,6 +18,9 @@ class StackConfig
     @root_branch = attrs[:root_branch]
     @remote = attrs[:remote]
     @code_review_tool = attrs[:code_review_tool]
+    @cr_username = attrs[:cr_username]
+    @cr_password = attrs[:cr_password]
+    @cr_token = attrs[:cr_token]
 
     link_parents
   end
@@ -48,7 +51,10 @@ class StackConfig
         version: config_hash['version'],
         root_branch: config_hash['root_branch'],
         remote: config_hash['remote'],
-        code_review_tool: config_hash['code_review_tool'])
+        code_review_tool: config_hash['code_review_tool'],
+        cr_username: config_hash['cr_username'],
+        cr_password: config_hash['cr_password'],
+        cr_token: config_hash['cr_token'])
   end
 
   def delete_branch(branch_name)
@@ -67,6 +73,9 @@ class StackConfig
       root_branch: @root_branch,
       remote: @remote,
       code_review_tool: @code_review_tool,
+      cr_username: @cr_username,
+      cr_password: @cr_password,
+      cr_token: @cr_token,
       branches: @branches.values.map(&:to_h) }
   end
 

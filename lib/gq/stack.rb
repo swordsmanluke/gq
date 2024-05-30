@@ -19,6 +19,7 @@ class Stack
     Init,
     Log,
     Restack,
+    Review,
     Sync,
     Submit,
     Top,
@@ -37,6 +38,9 @@ class Stack
       new_config.root_branch = existing_config.root_branch
       new_config.remote = existing_config.remote
       new_config.code_review_tool = existing_config.code_review_tool
+      new_config.cr_username = existing_config.cr_username
+      new_config.cr_password = existing_config.cr_password
+      new_config.cr_token = existing_config.cr_token
     end
     StackFile.save(new_config)
     @config = new_config
