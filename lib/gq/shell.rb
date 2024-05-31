@@ -1,6 +1,8 @@
 # Shell functions for ruby
 require "open3"
 
+
+
 def self_destruct(msg)
   puts msg
   exit 1
@@ -196,3 +198,6 @@ def bash(command, do_fn: ->(_) {}, or_fn: ->(_) {})
     end
   end
 end
+
+CHECKMARK = "\u2713".green
+RED_X = "\u2717".red

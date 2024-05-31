@@ -26,6 +26,8 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
     # by a head 'user' or 'organization'. I'm not certain yet how to get that.
     @client.pull_requests(@repo, state: 'open', base: base)
            .then { |prs| branch_name ? prs.select { |pr| pr.head.ref == branch_name } : prs }
+           .then { |prs| prs.select { |pr| @git.branches.map(&:name).include? pr.head.ref } } # Just my branches, plz
+           .then { |prs| prs.map { |pr| to_gq_review(pr) } }
   end
 
   def create_review(branch_name, base = nil, title = nil, body = nil)
@@ -48,12 +50,22 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   end
 
   def to_gq_review(pr)
-    ::Gq::CodeReview::Review.new(pr.id, pr.html_url)
+    pr_reviews = @client.pull_request_reviews(@repo, pr.number)
+    approval_state = 'pending'
+    pr_reviews.each do |review|
+      approval_state = 'approved' if review.state == 'APPROVED'
+      approval_state = 'changes requested' if review.state == 'CHANGES_REQUESTED'
+    end
+
+    ::Gq::CodeReview::Review.new(pr.number, pr.title, pr.html_url, approval_state, approval_state == 'approved', pr.body)
   end
 
-  def merge_review(branch_name, base = nil)
-    # TODO
-    super
+  def merge_review(pr, title=nil, body=nil)
+    args = { merge_method: 'squash'}
+    args['commit_title'] = title if title
+    args['commit_message'] = body if body
+
+    @client.merge_pull_request(@repo, pr.id, **args)
   end
 
   protected
@@ -104,5 +116,21 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
     return nil if token.nil? || token.empty?
 
     Octokit::Client.new(access_token: token)
+  end
+end
+
+class GithubMergeRequest < Gq::CodeReview::MergeRequest
+  def initialize(client, pr, repo)
+    @repo = repo
+    # Convert our Gq::CodeReview::Review to an Octokit::PullRequest
+    super(client, @client.pull_requests(@client.repo, pr.number))
+  end
+
+  def state
+    @pr = @client.pull_requests(@repo, @pr.number).merged? ? 'success' : 'pending'
+  end
+
+  def refresh!
+    @pr = @client.pull_requests(@repo, @pr.number)
   end
 end

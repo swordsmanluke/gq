@@ -18,6 +18,7 @@ class Stack
     Down,
     Init,
     Log,
+    Merge,
     Restack,
     Review,
     Sync,

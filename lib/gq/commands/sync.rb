@@ -7,9 +7,6 @@ class Sync < Command
 
   COMMAND = ["sync"]
 
-  CHECKMARK = "\u2713".green
-  RED_X = "\u2717".red
-
   def self.documentation
     "Pull from remote, then restack."
   end

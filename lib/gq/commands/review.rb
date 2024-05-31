@@ -20,8 +20,17 @@ class Review < Command
   end
 
   def call(*args)
-    @review_tool.reviews.each do |pr|
-      puts "#{pr.title} (#{pr.url})"
+    list(args)
+  end
+
+  protected
+
+  def list(args)
+    branch = args.shift
+    base = args.shift
+    @review_tool.reviews(branch, base).each do |pr|
+      puts "#{pr.title} [merge #{pr.mergeable ? "ready".green : "blocked".orange}]"
+      puts indent(pr.url.cyan)
     end
   end
 end

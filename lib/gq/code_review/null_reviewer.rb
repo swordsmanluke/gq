@@ -8,7 +8,7 @@ class NullReviewer < Gq::CodeReview::CodeReviewer
     true
   end
 
-  def reviews(branch_name, base = nil)
+  def reviews(branch_name=nil, base = nil)
     []
   end
 
