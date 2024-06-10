@@ -34,7 +34,6 @@ class Merge < Command
     # Merge all of our PR approved parents!
     stack = @stack.current_stack
     stack = stack[0..stack.index(@stack.current_branch.name)] # Only merge up to the current branch
-    stack = stack.reverse  # We want to start from the root and work our way up
     puts "Merging stack"
     stack.each { puts indent _1.cyan }
 
@@ -71,7 +70,7 @@ class Merge < Command
         puts CHECKMARK + " #{branch_name.cyan} (##{review.id.gold})"
         next
       else
-        self_destruct RED_X + " #{branch_name.cyan} (##{review.id.gold})\n#{review.url.cyan}"
+        self_destruct RED_X + " #{branch_name.cyan} (##{review.id.to_s.gold} - #{merge_request.state})\n#{review.url.cyan}"
       end
     end
   end

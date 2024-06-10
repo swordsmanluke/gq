@@ -17,7 +17,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def review_exists?(branch_name, base = nil)
     reviews(branch_name, base)
-      .select { |pr| pr.head.ref == branch_name }
+      .select { |pr| pr.branch == branch_name }
       .any?
   end
 
@@ -46,7 +46,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
 
   def update_review(branch_name, base = nil)
     # No action needed here - pushing is all that's required. Just return the pr
-    to_gq_review reviews(branch_name, base).first
+    reviews(branch_name, base).first
   end
 
   def to_gq_review(pr)
@@ -57,15 +57,31 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
       approval_state = 'changes requested' if review.state == 'CHANGES_REQUESTED'
     end
 
-    ::Gq::CodeReview::Review.new(pr.number, pr.title, pr.html_url, approval_state, approval_state == 'approved', pr.body)
+    mergeable = nil
+    10.times do |i|
+      gh_pr = @client.pull_request(@repo, pr.number)
+      mergeable = gh_pr.mergeable
+      break unless mergeable.nil?
+      sleep(1)
+    end
+    if mergeable.nil?
+      puts "Mergeability could not be determined.".yellow
+    end
+
+    ::Gq::CodeReview::Review.new(pr.number, # We'll use this as the ID
+                                 pr.title,
+                                 pr.html_url,   # This is the URL for humans
+                                 approval_state,  # Has this PR been approved?
+                                 mergeable,
+                                 pr.body,
+                                 pr.head.ref)  # Branch name
   end
 
   def merge_review(pr, title=nil, body=nil)
     args = { merge_method: 'squash'}
     args['commit_title'] = title if title
-    args['commit_message'] = body if body
 
-    @client.merge_pull_request(@repo, pr.id, **args)
+    @client.merge_pull_request(@repo, pr.id, body, **args)
   end
 
   protected

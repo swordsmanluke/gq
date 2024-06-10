@@ -28,9 +28,19 @@ class Review < Command
   def list(args)
     branch = args.shift
     base = args.shift
-    @review_tool.reviews(branch, base).each do |pr|
-      puts "#{pr.title} [merge #{pr.mergeable ? "ready".green : "blocked".orange}]"
-      puts indent(pr.url.cyan)
+    prs = @review_tool.reviews(branch, base)
+
+    if prs.empty?
+      puts "No open reviews"
+    else
+      puts "Review Mergeability\n====================".bright_yellow
+    end
+    prs.each do |pr|
+      dot = pr.mergeable ? CHECKMARK : RED_X
+      title = pr.title.cyan
+      puts "#{dot} #{title}"
+      puts indent(pr.url.bright_white, "|   ")
+      puts
     end
   end
 end
