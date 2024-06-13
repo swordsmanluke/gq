@@ -4,6 +4,7 @@ require_relative 'command'
 
 class Merge < Command
   COMMAND = ["merge", "m"]
+  SPINNER_CYCLE = ['-', '\\', '|', '/']
 
   def initialize(stack, git=Git)
     super
@@ -26,16 +27,20 @@ class Merge < Command
     # Make sure we're up to date
     cb = @stack.current_branch.name
     begin
-      @stack.sync
+      do_merge
     ensure
       @git.checkout cb
     end
+  end
 
+  def do_merge
     # Merge all of our PR approved parents!
     stack = @stack.current_stack
     stack = stack[0..stack.index(@stack.current_branch.name)] # Only merge up to the current branch
-    puts "Merging stack"
+    puts "Merge stack:\n-----------------"
     stack.each { puts indent _1.cyan }
+
+    approved_stack = []
 
     stack.each do |branch_name|
       next if branch_name == @stack.config.root_branch # Skip the root branch
@@ -58,19 +63,27 @@ class Merge < Command
       puts "Commit message:\n#{review.message.green}"
       body = review.message # `gum write --width 80 --value "#{review.message}"`.strip
 
-      self_destruct("aborted".red) unless Shell.prompt?("Merge it?")
+      approved_stack << [review, title, body] if Shell.prompt?("Merge it?")
+    end
 
+    puts "\nMerging...".yellow
+
+    approved_stack.each do |review, title, body|
+      print indent("#{review.id.to_s.cyan} (#{title.green}): #{SPINNER_CYCLE[0]}")
       merge_request = @cr_client.merge_review(review, title, body)
       while merge_request.state == 'pending'
         sleep 0.25
         merge_request.refresh!
+        print "\b#{SPINNER_CYCLE.rotate!.first}"
       end
 
       if merge_request.state == 'success'
-        puts CHECKMARK + " #{branch_name.cyan} (##{review.id.gold})"
+        print "\b#{CHECKMARK}\n"
         next
       else
-        self_destruct RED_X + " #{branch_name.cyan} (##{review.id.to_s.gold} - #{merge_request.state})\n#{review.url.cyan}"
+        print "\b#{RED_X}\n"
+        puts tree("State: #{merge_request.state}\n#{review.url.cyan}\n", 2)
+        self_destruct "Merge failed for #{review.id.to_s.cyan}"
       end
     end
   end

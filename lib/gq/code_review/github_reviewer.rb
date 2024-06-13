@@ -8,6 +8,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   def initialize(stack, git: Git)
     super
     @client = build_client
+    raise "Could not authenticate with GitHub" if @client.nil?
     @repo = git.remote_url(@stack.config.remote)
                .split(?:)
                .last
@@ -80,8 +81,8 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   def merge_review(pr, title=nil, body=nil)
     args = { merge_method: 'squash'}
     args['commit_title'] = title if title
-
     @client.merge_pull_request(@repo, pr.id, body, **args)
+    GithubMergeRequest.new(@client, pr, @repo)
   end
 
   protected
@@ -139,14 +140,19 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
   def initialize(client, pr, repo)
     @repo = repo
     # Convert our Gq::CodeReview::Review to an Octokit::PullRequest
-    super(client, @client.pull_requests(@client.repo, pr.number))
+    super(client, okto_pr(pr.id))
   end
 
   def state
-    @pr = @client.pull_requests(@repo, @pr.number).merged? ? 'success' : 'pending'
+    @pr.merged? ? 'success' : 'pending'
   end
 
   def refresh!
-    @pr = @client.pull_requests(@repo, @pr.number)
+    @pr = ockt_pr(@pr.number)
+  end
+
+  private
+  def okto_pr(id)
+    @client.pull_request(@repo, id)
   end
 end
