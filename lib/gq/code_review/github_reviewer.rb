@@ -139,8 +139,9 @@ end
 class GithubMergeRequest < Gq::CodeReview::MergeRequest
   def initialize(client, pr, repo)
     @repo = repo
-    # Convert our Gq::CodeReview::Review to an Octokit::PullRequest
-    super(client, okto_pr(pr.id))
+    @client = client
+    # Convert a Gq::CodeReview::Review to the underlying Github PullRequest
+    @pr = okto_pr(pr.id)
   end
 
   def state
@@ -148,7 +149,7 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
   end
 
   def refresh!
-    @pr = ockt_pr(@pr.number)
+    @pr = okto_pr(@pr.number)
   end
 
   private

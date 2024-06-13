@@ -31,7 +31,7 @@ class Submit < Command
         next if branch_name == @stack.config.root_branch # Skip the root branch
 
         puts "Pushing #{branch_name.cyan} to #{remote.cyan}..."
-        @git.push(branch_name, remote: remote)
+        @git.push(branch_name, remote: remote, force: true)
         parent = @git.parent_of(branch_name)
         update_code_review(branch_name, parent) if parent && parent != '' # We may be updating the root branch, which has no parent
       end

@@ -29,7 +29,7 @@ class Sync < Command
     deleted_branches = @stack.branches.keys - @git.branches
     deleted_branches.each(&method(:forget_branch))
 
-    # Refresh the stack
+    # Refresh the stack state
     @stack.refresh if deleted_branches.any?
 
     puts "Updating branch contents..."
@@ -49,7 +49,9 @@ class Sync < Command
         branch = to_sync.shift
         to_sync += branch.children.map { |child| @stack.branches[child] }
         matching_remote_branches = remote_branches.filter { |rb| rb == "#{@stack.config.remote}/#{branch.name}" }
-        results << sync_branch(branch.name, matching_remote_branches)
+        res = sync_branch(branch.name, matching_remote_branches)
+        res = rebase_branch(branch.name) if res[:success]
+        results << res
       end
     end
   end
@@ -81,6 +83,15 @@ class Sync < Command
       { success: true, branch: branch }
     else
       { success: false, branch: branch, output: result.output }
+    end
+  end
+
+  def rebase_branch(branch, onto: nil)
+    res = @git.rebase(branch, onto || @git.parent_of(branch))
+    if res.nil? || res.success?
+      { success: true, branch: branch }
+    else
+      { success: false, branch: branch, output: res.output }
     end
   end
 

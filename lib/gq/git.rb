@@ -69,12 +69,12 @@ class Git
       bash("git merge #{other_branch} --no-edit")
     end
 
-    def push(branch, remote: nil)
+    def push(branch, remote: nil, force: false)
       self_destruct("Not in a git repository") unless in_git_repo
 
       og_branch = current_branch.name
       checkout(branch)
-      bash("git -c core.hooksPath=/dev/null push #{remote} #{branch}")
+      bash("git -c core.hooksPath=/dev/null push #{remote} #{branch} #{force ? "--force" : ""}")
         .tap { checkout og_branch } # Restore the original branch after attempting the push, either success or failure
         .then { self_destruct("Failed to push branch: #{red(branch)}\n#{_1.output}") if _1.failure? }
     end
