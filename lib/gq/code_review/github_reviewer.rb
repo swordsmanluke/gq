@@ -81,8 +81,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   def merge_review(pr, title=nil, body=nil)
     args = { merge_method: 'squash'}
     args['commit_title'] = title if title
-    @client.merge_pull_request(@repo, pr.id, body, **args)
-    GithubMergeRequest.new(@client, pr, @repo)
+    GithubMergeRequest.new(@client, pr, @repo, @stack.config.root_branch)
   end
 
   protected
@@ -137,11 +136,13 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
 end
 
 class GithubMergeRequest < Gq::CodeReview::MergeRequest
-  def initialize(client, pr, repo)
+  def initialize(client, pr, repo, root_branch)
     @repo = repo
     @client = client
+    @root_branch = root_branch
     # Convert a Gq::CodeReview::Review to the underlying Github PullRequest
     @pr = okto_pr(pr.id)
+    @merging = false
   end
 
   def state
@@ -149,7 +150,16 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
   end
 
   def refresh!
+    merge! unless @merging  # If we weren't able to merge before, try again now.
     @pr = okto_pr(@pr.number)
+  end
+
+  def merge!
+    # Only merge the request _if_ the base branch is the root branch - don't merge to intermediate branches
+    if @pr.base.ref == @stack.config.root_branch && !@merging
+      @merging = true
+      @client.merge_pull_request(@repo, pr.id, body, **args)
+    end
   end
 
   private
