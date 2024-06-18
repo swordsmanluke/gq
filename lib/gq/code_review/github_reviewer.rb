@@ -59,15 +59,23 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
     end
 
     mergeable = nil
+    statuses = []
     10.times do |i|
       gh_pr = @client.pull_request(@repo, pr.number)
       mergeable = gh_pr.mergeable
+      statuses = @client.statuses(@repo, gh_pr.head.sha)
+                        .group_by(&:context)
+                        .transform_values{|v| v.sort_by(&:created_at).last } # Get the most recent status
       break unless mergeable.nil?
       sleep(1)
     end
+
     if mergeable.nil?
       puts "Mergeability could not be determined.".yellow
     end
+
+    incomplete = statuses.select { |_, status| status.state != 'success' }
+    mergeable = !!mergeable && incomplete.empty?
 
     ::Gq::CodeReview::Review.new(pr.number, # We'll use this as the ID
                                  pr.title,
@@ -79,9 +87,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
   end
 
   def merge_review(pr, title=nil, body=nil)
-    args = { merge_method: 'squash'}
-    args['commit_title'] = title if title
-    GithubMergeRequest.new(@client, pr, @repo, @stack.config.root_branch)
+    GithubMergeRequest.new(@client, @repo, @stack.config.root_branch, pr, title, body)
   end
 
   protected
@@ -136,12 +142,14 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
 end
 
 class GithubMergeRequest < Gq::CodeReview::MergeRequest
-  def initialize(client, pr, repo, root_branch)
+  def initialize(client, repo, root_branch, pr, title, body)
     @repo = repo
     @client = client
     @root_branch = root_branch
     # Convert a Gq::CodeReview::Review to the underlying Github PullRequest
     @pr = okto_pr(pr.id)
+    @title = title
+    @body = body
     @merging = false
   end
 
@@ -156,9 +164,11 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
 
   def merge!
     # Only merge the request _if_ the base branch is the root branch - don't merge to intermediate branches
-    if @pr.base.ref == @stack.config.root_branch && !@merging
+    if @pr.base.ref == @root_branch && !@merging
       @merging = true
-      @client.merge_pull_request(@repo, pr.id, body, **args)
+      args = { merge_method: 'squash'}
+      args['commit_title'] = @title if @title
+      @client.merge_pull_request(@repo, @pr.number, @body, **args)
     end
   end
 

@@ -82,6 +82,7 @@ class Merge < Command
     approved_stack.each do |review, title, body|
       print indent("#{review.id.to_s.cyan} (#{title.green}): #{SPINNER_CYCLE[0]}")
       merge_request = cr_client.merge_review(review, title, body)
+      merge_request.merge!
       while merge_request.state == 'pending'
         sleep 0.25
         merge_request.refresh!
