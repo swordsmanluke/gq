@@ -22,7 +22,7 @@ class Gq::CodeReview::CodeReviewer
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 
-  def merge_review(pr, title=nil, message=nil)
+  def create_merge_request(pr, title=nil, message=nil)
     raise NotImplementedError("This method must be implemented in a subclass.")
   end
 end

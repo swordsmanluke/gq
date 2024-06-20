@@ -86,7 +86,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
                                  pr.head.ref)  # Branch name
   end
 
-  def merge_review(pr, title=nil, body=nil)
+  def create_merge_request(pr, title=nil, body=nil)
     GithubMergeRequest.new(@client, @repo, @stack.config.root_branch, pr, title, body)
   end
 
@@ -160,6 +160,10 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
   def refresh!
     merge! unless @merging  # If we weren't able to merge before, try again now.
     @pr = okto_pr(@pr.number)
+  end
+
+  def mergeable?
+    @pr.mergeable
   end
 
   def merge!

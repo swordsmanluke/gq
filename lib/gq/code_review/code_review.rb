@@ -11,6 +11,10 @@ module CodeReview
       @pr = pr
     end
 
+    def mergeable?
+      raise "Not implemented"
+    end
+
     # Children must implement these methods
     def state
       raise "Not implemented"

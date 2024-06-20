@@ -4,7 +4,6 @@ require_relative 'command'
 
 class Merge < Command
   COMMAND = ["merge", "m"]
-  SPINNER_CYCLE = ['-', '\\', '|', '/']
 
   def initialize(stack, git=Git)
     super
@@ -80,13 +79,14 @@ class Merge < Command
     puts "\nMerging #{approved_stack.size} commits".yellow unless approved_stack.empty?
 
     approved_stack.each do |review, title, body|
-      print indent("#{review.id.to_s.cyan} (#{title.green}): #{SPINNER_CYCLE[0]}")
-      merge_request = cr_client.merge_review(review, title, body)
-      merge_request.merge!
-      while merge_request.state == 'pending'
-        sleep 0.25
-        merge_request.refresh!
-        print "\b#{SPINNER_CYCLE.rotate!.first}"
+      spinner = Spinner.new
+      print indent("#{review.id.to_s.cyan} (#{title.green}): ")
+      merge_request = spinner.spin do
+        cr_client.create_merge_request(review, title, body).tap do |mr|
+          sleep 0.25 until mr.mergeable?
+          mr.merge!
+          mr.refresh! until mr.state != 'pending'
+        end
       end
 
       if merge_request.state == 'success'

@@ -15,4 +15,12 @@ class NullReviewer < Gq::CodeReview::CodeReviewer
   def update_review(branch_name, base = nil)
     Gq::CodeReview::Review.new('n/a', "")
   end
+
+  def create_review(branch_name, base = nil, title = nil, body = nil)
+    Gq::CodeReview::Review.new('n/a', "")
+  end
+
+  def create_merge_request(pr, title=nil, message=nil)
+    Gq::CodeReview::MergeRequest.new('n/a', "")
+  end
 end

@@ -21,8 +21,8 @@ class Gq::CodeReview::MockReviewer < Gq::CodeReview::CodeReviewer
     true
   end
 
-  def approve_review(branch_name, base = nil)
-    puts "approved (mock) review"
+  def create_merge_request(pr, title=nil, message=nil)
+    puts "created (mock) merge request"
     true
   end
 end

@@ -75,6 +75,45 @@ def indent(string, fill = "  ")
   string.split("\n").map { fill + _1 }.join("\n")
 end
 
+class Spinner
+  BORING_CYCLE = %w[| / - \\]
+  FANCY_CYCLE = %w[⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏]
+
+  def initialize(cycle=FANCY_CYCLE)
+    @cycle = cycle
+    @spin_thread = nil
+  end
+
+  def spin(&block)
+    begin
+    start_spin_thread
+    res = block.call
+    ensure
+      stop_spin_thread
+    end
+
+    res
+  end
+
+  private
+  def start_spin_thread
+    @spin_thread = Thread.new do
+      print " " # An empty space to erase the first time we start spinning
+      while true
+        @cycle.each do |c|
+          print "\b#{c}"
+          sleep 0.1
+        end
+      end
+    end
+  end
+
+  def stop_spin_thread
+    @spin_thread&.tap { |thread| Thread.kill(thread) }
+    @spin_thread = nil
+  end
+end
+
 class String
   def red
     "\e[31m#{self}\e[0m"
