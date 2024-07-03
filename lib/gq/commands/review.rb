@@ -36,7 +36,14 @@ class Review < Command
       puts "Review Mergeability\n====================".bright_yellow
     end
     prs.each do |pr|
-      dot = pr.mergeable ? CHECKMARK : RED_X
+      dot = case pr.mergeable
+            when true
+              CHECKMARK
+            when false
+              RED_X
+            else
+              "?".yellow
+            end
       title = pr.title.cyan
       puts "#{dot} #{title}"
       puts indent(pr.url.bright_white, "|   ")

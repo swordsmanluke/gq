@@ -42,9 +42,7 @@ class Merge < Command
     stack.each do |branch_name|
       next if branch_name == @stack.config.root_branch # Skip the root branch
 
-      parent = @git.parent_of(branch_name)
-
-      review = cr_client.reviews(branch_name, parent).first
+      review = cr_client.reviews(branch_name).first
       if review.nil?
         puts "No review found for #{branch_name.cyan}. Skipping."
         next
@@ -56,9 +54,9 @@ class Merge < Command
 
       puts "Commit title: #{review.title.green} (##{review.id.to_s.green})"
       title = `gum input --width 50 --value "#{review.title}"`.strip
+      body = review.message || '' # `gum write --width 80 --value "#{review.message}"`.strip
 
-      puts "Commit message:\n#{review.message.green}"
-      body = review.message # `gum write --width 80 --value "#{review.message}"`.strip
+      puts "Commit message:\n#{body}"
 
       approved_stack << [review, title, body] if Shell.prompt?("Merge it?")
     end

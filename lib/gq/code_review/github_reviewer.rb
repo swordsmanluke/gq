@@ -57,6 +57,7 @@ class GithubReviewer < Gq::CodeReview::CodeReviewer
       approval_state = 'approved' if review.state == 'APPROVED'
       approval_state = 'changes requested' if review.state == 'CHANGES_REQUESTED'
     end
+    approval_state = 'merged' if pr.merged?
 
     mergeable = nil
     statuses = []
@@ -147,7 +148,7 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
     @client = client
     @root_branch = root_branch
     # Convert a Gq::CodeReview::Review to the underlying Github PullRequest
-    @pr = okto_pr(pr.id)
+    @pr = pr
     @title = title
     @body = body
     @merging = false
@@ -158,21 +159,59 @@ class GithubMergeRequest < Gq::CodeReview::MergeRequest
   end
 
   def refresh!
-    merge! unless @merging  # If we weren't able to merge before, try again now.
-    @pr = okto_pr(@pr.number)
+    pr = okto_pr(@pr.id)
+
+    pr_reviews = @client.pull_request_reviews(@repo, pr.number)
+    approval_state = 'pending'
+    pr_reviews.each do |review|
+      approval_state = 'approved' if review.state == 'APPROVED'
+      approval_state = 'changes requested' if review.state == 'CHANGES_REQUESTED'
+    end
+
+    approval_state = 'merged' if pr.merged?
+
+    mergeable = nil
+    statuses = []
+    10.times do
+      pr = @client.pull_request(@repo, pr.number)
+      mergeable = pr.mergeable
+      statuses = @client.statuses(@repo, pr.head.sha)
+                        .group_by(&:context)
+                        .transform_values{|v| v.sort_by(&:created_at).last } # Get the most recent status
+      break unless mergeable.nil? || pr.merged?
+      sleep(1)
+    end
+
+    incomplete = statuses.select { |_, status| status.state != 'success' }
+    mergeable = if incomplete.any? || pr.merged?
+                  false
+                else
+                  mergeable.nil? ? nil : mergeable
+                end
+
+    @pr = ::Gq::CodeReview::Review.new(pr.number, # We'll use this as the ID
+                                  pr.title,
+                                  pr.html_url,   # This is the URL for humans
+                                  approval_state,  # Has this PR been approved?
+                                  mergeable,
+                                  pr.body,
+                                  pr.head.ref,  # Branch name
+                                  pr.base.ref)  # Base branch name
   end
 
   def mergeable?
-    @pr.mergeable
+    refresh!
+    @pr.mergeable == true
   end
 
   def merge!
+    return unless @pr.mergeable && !@pr.merged?
     # Only merge the request _if_ the base branch is the root branch - don't merge to intermediate branches
-    if @pr.base.ref == @root_branch && !@merging
+    if @pr.base == @root_branch && !@merging
       @merging = true
       args = { merge_method: 'squash'}
       args['commit_title'] = @title if @title
-      @client.merge_pull_request(@repo, @pr.number, @body, **args)
+      @client.merge_pull_request(@repo, @pr.id, @body, **args)
     end
   end
 

@@ -2,7 +2,15 @@
 
 module Gq
 module CodeReview
-  Review = Struct.new(:id, :title, :url, :state, :mergeable, :message, :branch)
+  Review = Struct.new(:id, :title, :url, :state, :mergeable, :message, :branch, :base) do
+    def merged?
+      state == 'merged'
+    end
+
+    def approved?
+      state == 'approved'
+    end
+  end
 
   class MergeRequest
     attr_reader :client, :pr
